@@ -22,7 +22,7 @@ internal class Api {
         }
     }
 
-    private val server = HttpServer.create(InetSocketAddress("localhost", port), 0).also {
+    private val server = HttpServer.create(InetSocketAddress(port), 0).also {
         it.executor = Executors.newFixedThreadPool(10)
         it.håndter("isalive", "text/plain") { "I am alive!" }
         it.håndter("isready", "text/plain") { "I am ready!" }
