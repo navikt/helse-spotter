@@ -169,15 +169,16 @@ private fun avsluttOvervåking(vedtaksperiodeId: UUID) {
     }
 }
 
+private fun Duration.formater() = "${toSeconds()} sekunder & ${toMillisPart()} millisekunder"
 private fun printOvervåking(overstyrInntektId: UUID) {
     overvåkingOverstyrInntektTidtaking[overstyrInntektId]?.also {
         val første = it.first().third
         val siste = it.last().third
         val tidsbruk = Duration.between(første, siste)
         treghetHistogram.labels("overstyr_inntekt").observe(tidsbruk.toSeconds().toDouble())
-        logger.info("Tidsbruk for overstyr_inntekt: $tidsbruk")
-        logger.info(it.joinToString(separator = " -> ") { (id, eventName, opprettet) ->
-            "$eventName ($id) - ${Duration.between(første, opprettet)}"
+        logger.info("Tidsbruk for overstyr_inntekt: ${tidsbruk.formater()}")
+        logger.info(it.joinToString(separator = "\n-> ") { (id, eventName, opprettet) ->
+            "$eventName ($id) - ${Duration.between(første, opprettet).formater()}"
         })
     }
 }
