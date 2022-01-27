@@ -13,10 +13,10 @@ internal class Api {
     private fun HttpServer.håndter(path: String, contentType: String, response: () -> String) {
         createContext("/$path") { httpExchange ->
             incomingHttpRequests.labels(path).inc()
-            val responseBody = response()
-            httpExchange.sendResponseHeaders(200, responseBody.length.toLong())
+            val responseBody = response().toByteArray()
             httpExchange.responseHeaders.add("Content-Type", contentType)
-            httpExchange.responseBody.write(responseBody.toByteArray())
+            httpExchange.sendResponseHeaders(200, responseBody.size.toLong())
+            httpExchange.responseBody.write(responseBody)
             httpExchange.responseBody.flush()
             httpExchange.responseBody.close()
         }
@@ -24,8 +24,8 @@ internal class Api {
 
     private val server = HttpServer.create(InetSocketAddress(port), 0).also {
         it.executor = Executors.newFixedThreadPool(10)
-        it.håndter("isalive", "text/plain") { "I am alive!" }
-        it.håndter("isready", "text/plain") { "I am ready!" }
+        it.håndter("isalive", "text/plain; charset=utf-8") { "I am alive!" }
+        it.håndter("isready", "text/plain; charset=utf-8") { "I am ready!" }
         it.håndter("metrics", TextFormat.CONTENT_TYPE_004) {
             val metrics = CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(emptySet())
             CharArrayWriter(1024)
