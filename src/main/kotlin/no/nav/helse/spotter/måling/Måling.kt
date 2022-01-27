@@ -1,6 +1,5 @@
 package no.nav.helse.spotter.måling
 
-import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.spotter.event.VedtaksperiodeEndret
 import java.time.Duration
 import java.time.LocalDateTime
