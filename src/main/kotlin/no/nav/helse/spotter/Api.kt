@@ -45,7 +45,7 @@ internal class Api {
     private companion object {
         private val incomingHttpRequests =
             Counter.build("incoming_http_requests", "Antall innkommende HTTP requester").labelNames("path").register()
-        private const val port = 8001
+        private const val port = 8080
         private val logger = LoggerFactory.getLogger(Api::class.java)
     }
 }
