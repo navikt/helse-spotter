@@ -10,11 +10,11 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
-private val logger = LoggerFactory.getLogger("no.nav.helse.spotter.OverstyrInntekt")
+private val logger = LoggerFactory.getLogger("no.nav.helse.spotter.Overstyring")
 
-internal fun RapidsCliApplication.mvpOverstyrInntekt() {
+internal fun RapidsCliApplication.mvpOverstyring(overstringEvent: String) {
     JsonRiver(this).apply {
-        validate(onlyEvents("overstyr_inntekt"))
+        validate(onlyEvents(overstringEvent))
         validate(textFieldValidation("@id"))
         validate(textFieldValidation("fødselsnummer"))
         validate(erIkkeOvervåket())
@@ -35,7 +35,7 @@ internal fun RapidsCliApplication.mvpOverstyrInntekt() {
         validate(textFieldValidation("vedtaksperiodeId"))
         validate(dateTimeValidation("@opprettet"))
         validate(erOvervåket())
-        validate(harKobletVedtaksperiodeTilOverstyrInntekt())
+        validate(harKobletVedtaksperiodeTilOverstyring())
         onMessage { _, node -> lagreOvervåking(node.vedtaksperiodeId, node) }
     }
     JsonRiver(this).apply {
@@ -49,7 +49,7 @@ internal fun RapidsCliApplication.mvpOverstyrInntekt() {
             if ((node.path("@løsning") as ObjectNode).size() != 1) return@validate false // forventer kun én løsning
             return@validate node.hasNonNull("@final") || !node.path("@final").asBoolean() // forventer ikke hele svaret
         }
-        validate(harKobletVedtaksperiodeTilOverstyrInntekt())
+        validate(harKobletVedtaksperiodeTilOverstyring())
         onMessage { _, node ->
             lagreOvervåking(
                 node.vedtaksperiodeId,
@@ -65,7 +65,7 @@ internal fun RapidsCliApplication.mvpOverstyrInntekt() {
         validate(textFieldValidation("@id"))
         validate(textFieldValidation("vedtaksperiodeId"))
         validate(dateTimeValidation("@opprettet"))
-        validate(harKobletVedtaksperiodeTilOverstyrInntekt())
+        validate(harKobletVedtaksperiodeTilOverstyring())
         onMessage { _, node -> kobleOverstyringTilGodkjenningsbehov(node.vedtaksperiodeId, node.id) }
         onMessage { _, node ->
             lagreOvervåking(
@@ -86,41 +86,41 @@ internal fun RapidsCliApplication.mvpOverstyrInntekt() {
                 node.path("hendelseId").asText()
             )]?.also { vedtaksperiodeId ->
                 lagreOvervåking(vedtaksperiodeId, node)
-                avsluttOvervåking(vedtaksperiodeId)
+                avsluttOvervåking(vedtaksperiodeId, overstringEvent)
             }
         }
     }
 }
 
-private val overvåkingOverstyrInntekter = mutableMapOf<UUID, String>() // overstyr_inntekt.@id -> fnr
-private val overvåkingOverstyrInntekterTilVedtaksperiode =
-    mutableMapOf<UUID, UUID>() // vedtaksperiodeId -> overstyr_inntekt.@id
+private val overvåkingOverstyring = mutableMapOf<UUID, String>() // overstyr_{X}.@id -> fnr
+private val overvåkingOverstyringTilVedtaksperiode =
+    mutableMapOf<UUID, UUID>() // vedtaksperiodeId -> overstyr_{X}.@id
 private val overvåkingGodkjenningsbehovTilVedtaksperiode =
     mutableMapOf<UUID, UUID>() // godkjenningsbehov.@id -> vedtaksperiodeId
-private val overvåkingOverstyrInntektTidtaking = mutableMapOf<UUID, MutableList<Triple<UUID, String, LocalDateTime>>>()
+private val overvåkingOverstyringTidtaking = mutableMapOf<UUID, MutableList<Triple<UUID, String, LocalDateTime>>>()
 private fun erOvervåket() =
     fun(record: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
-        return node.fnr in overvåkingOverstyrInntekter.values
+        return node.fnr in overvåkingOverstyring.values
     }
 
 private fun erIkkeOvervåket() =
     fun(record: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
-        return node.id !in overvåkingOverstyrInntekter
+        return node.id !in overvåkingOverstyring
     }
 
 private fun startOvervåking(fnr: String, node: JsonNode) {
-    overvåkingOverstyrInntekter[node.id] = fnr
-    overvåkingOverstyrInntektTidtaking[node.id] = mutableListOf(Triple(node.id, node.eventName, node.opprettet))
+    overvåkingOverstyring[node.id] = fnr
+    overvåkingOverstyringTidtaking[node.id] = mutableListOf(Triple(node.id, node.eventName, node.opprettet))
 }
 
 private fun harIkkeKobletVedtaksperiodeTilOverstyring() =
     fun(record: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
-        return node.vedtaksperiodeId !in overvåkingOverstyrInntekterTilVedtaksperiode
+        return node.vedtaksperiodeId !in overvåkingOverstyringTilVedtaksperiode
     }
 
-private fun harKobletVedtaksperiodeTilOverstyrInntekt() =
+private fun harKobletVedtaksperiodeTilOverstyring() =
     fun(record: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
-        return node.vedtaksperiodeId in overvåkingOverstyrInntekterTilVedtaksperiode
+        return node.vedtaksperiodeId in overvåkingOverstyringTilVedtaksperiode
     }
 
 private fun harKobletOppgaveTilGodkjenningsbehov() =
@@ -130,9 +130,9 @@ private fun harKobletOppgaveTilGodkjenningsbehov() =
     }
 
 private fun kobleVedtaksperiodeTilOverstyring(node: JsonNode) {
-    val overstyrInntektId = UUID.fromString(node.path("@forårsaket_av").path("id").asText())
-    if (overstyrInntektId !in overvåkingOverstyrInntekter) return
-    overvåkingOverstyrInntekterTilVedtaksperiode[node.vedtaksperiodeId] = overstyrInntektId
+    val overstyringId = UUID.fromString(node.path("@forårsaket_av").path("id").asText())
+    if (overstyringId !in overvåkingOverstyring) return
+    overvåkingOverstyringTilVedtaksperiode[node.vedtaksperiodeId] = overstyringId
 }
 
 private fun kobleOverstyringTilGodkjenningsbehov(vedtaksperiodeId: UUID, id: UUID) {
@@ -140,31 +140,31 @@ private fun kobleOverstyringTilGodkjenningsbehov(vedtaksperiodeId: UUID, id: UUI
 }
 
 private fun lagreOvervåking(vedtaksperiodeId: UUID, node: JsonNode, eventName: String = node.eventName) {
-    val overstyrInntektId = overvåkingOverstyrInntekterTilVedtaksperiode[vedtaksperiodeId] ?: return
-    overvåkingOverstyrInntektTidtaking[overstyrInntektId]?.add(Triple(node.id, eventName, node.opprettet))
+    val overstyringId = overvåkingOverstyringTilVedtaksperiode[vedtaksperiodeId] ?: return
+    overvåkingOverstyringTidtaking[overstyringId]?.add(Triple(node.id, eventName, node.opprettet))
 }
 
-private fun avsluttOvervåking(vedtaksperiodeId: UUID) {
-    val overstyrInntektId = overvåkingOverstyrInntekterTilVedtaksperiode[vedtaksperiodeId] ?: return
-    printOvervåking(overstyrInntektId)
+private fun avsluttOvervåking(vedtaksperiodeId: UUID, overstyringEvent: String) {
+    val overstyringId = overvåkingOverstyringTilVedtaksperiode[vedtaksperiodeId] ?: return
+    printOvervåking(overstyringId, overstyringEvent)
 
-    overvåkingOverstyrInntekter.remove(overstyrInntektId)
-    overvåkingOverstyrInntektTidtaking.remove(overstyrInntektId)
-    overvåkingOverstyrInntekterTilVedtaksperiode.filterValues { it == overstyrInntektId }.keys.forEach {
-        overvåkingOverstyrInntekterTilVedtaksperiode.remove(it)
+    overvåkingOverstyring.remove(overstyringId)
+    overvåkingOverstyringTidtaking.remove(overstyringId)
+    overvåkingOverstyringTilVedtaksperiode.filterValues { it == overstyringId }.keys.forEach {
+        overvåkingOverstyringTilVedtaksperiode.remove(it)
     }
     overvåkingGodkjenningsbehovTilVedtaksperiode.filterValues { it == vedtaksperiodeId }.keys.forEach {
         overvåkingGodkjenningsbehovTilVedtaksperiode.remove(it)
     }
 }
 
-private fun printOvervåking(overstyrInntektId: UUID) {
-    overvåkingOverstyrInntektTidtaking[overstyrInntektId]?.also {
+private fun printOvervåking(overstyringId: UUID, overstyringEvent: String) {
+    overvåkingOverstyringTidtaking[overstyringId]?.also {
         val første = it.first().third
         val siste = it.last().third
         val tidsbruk = Duration.between(første, siste)
-        treghetHistogram.labels("overstyr_inntekt").observe(tidsbruk.toSeconds().toDouble())
-        logger.info("Tidsbruk for overstyr_inntekt: ${tidsbruk.formater()}")
+        treghetHistogram.labels(overstyringEvent).observe(tidsbruk.toSeconds().toDouble())
+        logger.info("Tidsbruk for $overstyringEvent: ${tidsbruk.formater()}")
         logger.info(it.joinToString(separator = "\n-> ") { (id, eventName, opprettet) ->
             "$eventName ($id) - ${Duration.between(første, opprettet).formater()}"
         })

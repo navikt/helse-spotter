@@ -12,7 +12,9 @@ fun main() {
     //val målinger = Målinger()
 
     RapidsCliApplication(ConsumerProducerFactory(AivenConfig.default)).apply {
-        mvpOverstyrInntekt()
+        //mvpOverstyrInntekt()
+        mvpOverstyring("overstyr_inntekt")
+        mvpOverstyring("overstyr_tidslinje")
         /*JsonRiver(this).apply {
             validate { _, jsonNode, _ -> jsonNode["@event_name"].erSatt() }
             validate { _, jsonNode, _ -> jsonNode["@id"].erSatt() }
