@@ -23,6 +23,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
+    testImplementation("io.mockk:mockk:1.12.0")
+
 
     implementation("io.prometheus:simpleclient_common:0.14.0")
     implementation("io.prometheus:simpleclient_hotspot:0.14.0")
