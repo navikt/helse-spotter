@@ -15,6 +15,9 @@ fun main() {
     }.start(
         "tbd-spotter-v1",
         listOf("tbd.rapid.v1"),
-        Properties().also { it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest" }
+        Properties().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+            it[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = "true"
+        }
     )
 }
