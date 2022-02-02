@@ -1,6 +1,6 @@
 package no.nav.helse.spotter.måling
 
-import no.nav.helse.spotter.MvpGodkjenning
+import no.nav.helse.spotter.MvpGodkjenningFlereArbeidsgivere
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -8,11 +8,13 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
 
-internal class MvpGodkjenningTest {
+internal class MvpGodkjenningFlereArbeidsgivereTest {
 
-    private val målinger = mutableListOf<MvpGodkjenning.Målingsresultat>()
+    private val målinger = mutableListOf<MvpGodkjenningFlereArbeidsgivere.Målingsresultat>()
     private val testRapidsCliApplication = TestRapidsCliApplication()
-    init { MvpGodkjenning { måling -> målinger.add(måling) }.registrer(testRapidsCliApplication.rapidsCliApplication) }
+    private val måling = MvpGodkjenningFlereArbeidsgivere { måling -> målinger.add(måling) }.also {
+        it.registrer(testRapidsCliApplication.rapidsCliApplication)
+    }
 
     @BeforeEach
     fun reset() {
@@ -36,6 +38,7 @@ internal class MvpGodkjenningTest {
                 aktiveVedtaksperioder = setOf(vedtaksperiodeId2)
             )
         )
+        assertEquals(1, måling.antallPågåendeMålinger())
 
         // Måling starter når saksbehandler sender løsning for godkjenning av vedtaksperiode 1
         testRapidsCliApplication.send(
@@ -71,14 +74,29 @@ internal class MvpGodkjenningTest {
             )
         )
 
+        assertEquals(1, måling.antallPågåendeMålinger())
         // Måling ferdig når det blir opprettet oppgave på Vedtaksperiode 2
         testRapidsCliApplication.send(
             oppgaveOpprettet(godkjenningId2)
         )
 
+        assertEquals(0, måling.antallPågåendeMålinger())
         assertEquals(1, målinger.size)
         assertEquals(listOf("@behov.Godkjenning","saksbehandler_løsning", "vedtaksperiode_endret", "vedtaksperiode_endret", "@behov.Godkjenning", "oppgave_opprettet"), målinger.first().events.map { it.navn })
         println(målinger.first())
+    }
+
+    @Test
+    fun `godkjenningsbehov uten andre aktive vedtaksperioder starter ingen måling`() {
+        testRapidsCliApplication.send(
+            godkjenningsbehov(
+                id = UUID.randomUUID(),
+                vedtaksperiodeId = UUID.randomUUID(),
+                aktiveVedtaksperioder = emptySet()
+            )
+        )
+        assertEquals(0, måling.antallPågåendeMålinger())
+        assertEquals(0, målinger.size)
     }
 
     @Language("JSON")

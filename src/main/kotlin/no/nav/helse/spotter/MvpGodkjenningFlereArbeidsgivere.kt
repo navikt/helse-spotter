@@ -8,48 +8,72 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.util.*
 
-internal class MvpGodkjenning(
+internal class MvpGodkjenningFlereArbeidsgivere(
     private val målingFerdig: (målingsresultat: Målingsresultat) -> Unit = {
         logger.info(it.toString())
-        treghetHistogram.labels("Godkjenning").observe(Duration.between(it.startet, it.ferdig).toSeconds().toDouble())
+        treghetHistogram.labels("GodkjenningFlereArbeidsgivere").observe(Duration.between(it.startet, it.ferdig).toSeconds().toDouble())
     }) {
 
     private companion object {
-        private val logger = LoggerFactory.getLogger(MvpGodkjenning::class.java)
+        private val logger = LoggerFactory.getLogger(MvpGodkjenningFlereArbeidsgivere::class.java)
     }
 
     private val målinger = mutableListOf<Måling>()
+    internal fun antallPågåendeMålinger() = målinger.size
 
-    private fun oppdaterBasertPåVedtaksperiodeId(vedtaksperiodeId: UUID, oppdater: (måling: Måling) -> Unit) =
+    private fun oppdatertMålingBasertPåVedtaksperiodeId(vedtaksperiodeId: UUID, oppdater: (måling: Måling) -> Unit) =
         målinger.firstOrNull { it.kjennerTilVedtaksperiodeId(vedtaksperiodeId) }?.also { måling ->
             oppdater(måling)
         }
 
-    private fun oppdaterBasertPåEventId(eventId: UUID, oppdatert: (måling: Måling) -> Unit) =
+    private fun oppdaterMålingBasertPåEventId(eventId: UUID, oppdater: (måling: Måling) -> Unit) =
         målinger.firstOrNull { it.kjennerTilEventId(eventId) }?.also { måling ->
-            oppdatert(måling)
+            oppdater(måling)
         }
 
     private fun håndterGodkjenningsbehov(behov: Godkjenningsbehov) {
         when {
-            oppdaterBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) { it.leggTil(behov) } != null -> return
-            oppdaterBasertPåEventId(behov.forårsaketAv) { it.leggTil(behov)} != null -> return
+            oppdatertMålingBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) {
+                logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på vedtaksperiodeId)")
+                it.leggTil(behov)
+            } != null -> return
+            oppdaterMålingBasertPåEventId(behov.forårsaketAv) {
+                logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på forårsaketAv)")
+                it.leggTil(behov)
+            } != null -> return
             // Starter kun nye målinger der hvor det finnes andre aktive Vedtaksperioder
-            behov.aktiveVedtaksperioder.isNotEmpty() -> målinger.add(Måling(behov))
+            behov.aktiveVedtaksperioder.isNotEmpty() -> {
+                val nyMåling = Måling(behov)
+                logger.info("Starter ny måling ${nyMåling.målingId} fra Behov=$behov")
+                målinger.add(Måling(behov))
+            }
         }
     }
 
     private fun håndterVedtaksperiodeEndret(behov: VedtaksperiodeEndret) {
-        if (oppdaterBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) { it.leggTil(behov) } != null) return
-        oppdaterBasertPåEventId(behov.forårsaketAv) { it.leggTil(behov) }
+        if (oppdatertMålingBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) {
+            logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på vedtaksperiodeId)")
+            it.leggTil(behov)
+        } != null) return
+
+        oppdaterMålingBasertPåEventId(behov.forårsaketAv) {
+            logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på forårsaketAv)")
+            it.leggTil(behov)
+        }
     }
 
     private fun håndterSaksbehandlerløsning(behov: Saksbehandlerløsning) {
-        oppdaterBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
+        oppdaterMålingBasertPåEventId(behov.hendelseId) {
+            logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på hendelseId)")
+            it.leggTil(behov)
+        }
     }
 
     private fun håndterOppgaveOpprettet(behov: OppgaveOpprettet) =
-        oppdaterBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
+        oppdaterMålingBasertPåEventId(behov.hendelseId) {
+            logger.info("Utfyller eksisterende måling ${it.målingId} med Behov=$behov (basert på hendelseId)")
+            it.leggTil(behov)
+        }
 
     internal fun registrer(rapidsCliApplication: RapidsCliApplication) {
         rapidsCliApplication.apply {
@@ -103,7 +127,7 @@ internal class MvpGodkjenning(
         val events: List<Event>,
         val startet: LocalDateTime,
         val ferdig: LocalDateTime) {
-        override fun toString() = "Måling for godkjenning: tok totalt ${Duration.between(startet, ferdig).formater()}\n-> " +
+        override fun toString() = "Måling for godkjenning av flere arbeidsgivere: tok totalt ${Duration.between(startet, ferdig).formater()}\n-> " +
             events.joinToString("\n-> ") {
                 if (it.opprettet < startet) "${it.navn} - Før måling startet ($it)"
                 else "${it.navn} - ${Duration.between(startet, it.opprettet).formater()} ($it)"
@@ -111,6 +135,7 @@ internal class MvpGodkjenning(
     }
 
     private class Måling(behov: Godkjenningsbehov) {
+        val målingId = UUID.randomUUID()
         private val godkjenningsbehov = mutableListOf(behov)
         private val vedtaksperiodeEndret = mutableListOf<VedtaksperiodeEndret>()
         private val saksbehandlerløsninger = mutableListOf<Saksbehandlerløsning>()
