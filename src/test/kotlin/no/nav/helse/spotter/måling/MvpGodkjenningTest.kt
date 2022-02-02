@@ -82,11 +82,14 @@ internal class MvpGodkjenningTest {
     }
 
     @Language("JSON")
-    private fun godkjenningsbehov(id: UUID, vedtaksperiodeId: UUID, aktiveVedtaksperioder: Set<UUID>) = """
+    private fun godkjenningsbehov(id: UUID, vedtaksperiodeId: UUID, aktiveVedtaksperioder: Set<UUID>, forårsaketAv: UUID = UUID.randomUUID()) = """
         {
           "@event_name": "behov",
           "@id": "$id",
           "@opprettet": "${LocalDateTime.now()}",
+          "@forårsaket_av": {
+            "id": "$forårsaketAv"
+          },
           "@behov": ["Godkjenning"],
           "vedtaksperiodeId": "$vedtaksperiodeId",
           "Godkjenning": {

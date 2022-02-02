@@ -28,7 +28,7 @@ internal class MvpGodkjenning(
             målinger[index] = oppdatert(målinger[index])
         }?.let { målinger[it] }
 
-    private fun oppdatertBasertPåEventId(eventId: UUID, oppdatert:(måling: Måling) -> Måling) =
+    private fun oppdaterBasertPåEventId(eventId: UUID, oppdatert:(måling: Måling) -> Måling) =
         målinger.indexOfFirst {
             it.kjennerTilEventId(eventId)
         }.takeIf { it >= 0 }?.also { index ->
@@ -36,21 +36,25 @@ internal class MvpGodkjenning(
         }?.let { målinger[it] }
 
     private fun håndterGodkjenningsbehov(behov: Godkjenningsbehov) {
-        if (oppdaterBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) { it.leggTil(behov) } != null) return
-        else målinger.add(Måling(behov))
+        when {
+            oppdaterBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) { it.leggTil(behov) } != null -> return
+            oppdaterBasertPåEventId(behov.forårsaketAv) { it.leggTil(behov)} != null -> return
+            // Starter kun nye målinger der hvor det finnes andre aktive Vedtaksperioder
+            behov.aktiveVedtaksperioder.isNotEmpty() -> målinger.add(Måling(behov))
+        }
     }
 
     private fun håndterVedtaksperiodeEndret(behov: VedtaksperiodeEndret) {
         if (oppdaterBasertPåVedtaksperiodeId(behov.vedtaksperiodeId) { it.leggTil(behov) } != null) return
-        oppdatertBasertPåEventId(behov.forårsaketAv) { it.leggTil(behov) }
+        oppdaterBasertPåEventId(behov.forårsaketAv) { it.leggTil(behov) }
     }
 
     private fun håndterSaksbehandlerløsning(behov: Saksbehandlerløsning) {
-        oppdatertBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
+        oppdaterBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
     }
 
     private fun håndterOppgaveOpprettet(behov: OppgaveOpprettet) =
-        oppdatertBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
+        oppdaterBasertPåEventId(behov.hendelseId) { it.leggTil(behov)}
 
     internal fun registrer(rapidsCliApplication: RapidsCliApplication) {
         rapidsCliApplication.apply {
@@ -158,9 +162,11 @@ internal class MvpGodkjenning(
         node: JsonNode
     ) : Event(node.id, node.opprettet, "@behov.Godkjenning") {
         val vedtaksperiodeId = node.vedtaksperiodeId
+        val forårsaketAv = node.forårsaketAv
         val aktiveVedtaksperioder = node["Godkjenning"].path("aktiveVedtaksperioder").map { UUID.fromString(it.asText()) }.toSet()
         init {
             info["vedtaksperiodeId"] = vedtaksperiodeId
+            info["forårsaketAv"] = forårsaketAv
             info["aktiveVedtaksperioder"] = aktiveVedtaksperioder
         }
     }
