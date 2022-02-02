@@ -9,16 +9,15 @@ import java.time.LocalDateTime
 import java.time.LocalDateTime.now
 import java.util.*
 
-internal class MvpGodkjenningFlereArbeidsgivere(
+internal class MvpGodkjenning(
     private val målingFerdig: (målingsresultat: Målingsresultat) -> Unit = {
         logger.info(it.toString())
-        treghetHistogram.labels("GodkjenningFlereArbeidsgivere")
-            .observe(Duration.between(it.startet, it.ferdig).toSeconds().toDouble())
+        treghetHistogram.labels(it.navn).observe(it.tidsbruk.toSeconds().toDouble())
     }
 ) {
 
     private companion object {
-        private val logger = LoggerFactory.getLogger(MvpGodkjenningFlereArbeidsgivere::class.java)
+        private val logger = LoggerFactory.getLogger(MvpGodkjenning::class.java)
     }
 
     private val målinger = mutableListOf<Måling>()
@@ -107,7 +106,7 @@ internal class MvpGodkjenningFlereArbeidsgivere(
                 validate { _, node, _ -> "Godkjenning" in node.path("@behov").map(JsonNode::asText) }
                 validate(textFieldValidation("vedtaksperiodeId"))
                 validate { _, node, _ ->
-                    node.path("Godkjenning").path("inntektskilde").asText() == "FLERE_ARBEIDSGIVERE"
+                    node.path("Godkjenning").path("inntektskilde").isTextual
                 }
                 validate { _, node, _ -> node.path("Godkjenning").path("aktiveVedtaksperioder").isArray }
                 onMessage { _, node ->
@@ -143,11 +142,13 @@ internal class MvpGodkjenningFlereArbeidsgivere(
 
 
     data class Målingsresultat(
+        val navn: String,
         val events: List<Event>,
         val startet: LocalDateTime,
         val ferdig: LocalDateTime
     ) {
-        override fun toString() = "Måling for godkjenning av flere arbeidsgivere: tok totalt ${Duration.between(startet, ferdig).formater()}" + events.formater()
+        val tidsbruk = Duration.between(startet, ferdig)
+        override fun toString() = "Måling for $navn: tok totalt ${tidsbruk.formater()}" + events.formater()
     }
 
 
@@ -175,8 +176,13 @@ internal class MvpGodkjenningFlereArbeidsgivere(
 
         fun måling(): Målingsresultat {
             val sortertPåTid = events.sortedBy { it.opprettet }
+            val navn = when (godkjenningsbehov.any { it.flereArbeidsgivere }) {
+                true -> "GodkjenningFlereArbeidsgivere"
+                false -> "GodkjenningEnArbeidsgiver"
+            }
 
             return Målingsresultat(
+                navn = navn,
                 startet = saksbehandlerløsning.opprettet,
                 ferdig = sortertPåTid.last().opprettet,
                 events = sortertPåTid
@@ -191,6 +197,7 @@ internal class MvpGodkjenningFlereArbeidsgivere(
         val forårsaketAv = node.forårsaketAv
         val aktiveVedtaksperioder = node.path("Godkjenning").path("aktiveVedtaksperioder")
             .map { UUID.fromString(it.path("vedtaksperiodeId").asText()) }.toSet()
+        val flereArbeidsgivere = node.path("Godkjenning").path("inntektskilde").asText() == "FLERE_ARBEIDSGIVERE"
         val slettMåling = node.harLøsning() && aktiveVedtaksperioder.isEmpty()
         override val eventIds = setOf(id, forårsaketAv)
 

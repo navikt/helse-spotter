@@ -1,6 +1,6 @@
 package no.nav.helse.spotter.måling
 
-import no.nav.helse.spotter.MvpGodkjenningFlereArbeidsgivere
+import no.nav.helse.spotter.MvpGodkjenning
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 import java.util.*
 
-internal class MvpGodkjenningFlereArbeidsgivereTest {
+internal class MvpGodkjenningTest {
 
-    private val målinger = mutableListOf<MvpGodkjenningFlereArbeidsgivere.Målingsresultat>()
+    private val målinger = mutableListOf<MvpGodkjenning.Målingsresultat>()
     private val testRapidsCliApplication = TestRapidsCliApplication()
-    private val måling = MvpGodkjenningFlereArbeidsgivere { måling -> målinger.add(måling) }.also {
+    private val måling = MvpGodkjenning { måling -> målinger.add(måling) }.also {
         it.registrer(testRapidsCliApplication.rapidsCliApplication)
     }
 
@@ -145,7 +145,7 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
           "vedtaksperiodeId": "$vedtaksperiodeId",
           "Godkjenning": {
             "aktiveVedtaksperioder": ${aktiveVedtaksperioder.map { """{"vedtaksperiodeId": "$it"}""" }},
-            "inntektskilde": "FLERE_ARBEIDSGIVERE"
+            "inntektskilde": "EN_ARBEIDSGIVER"
           }
         }
     """

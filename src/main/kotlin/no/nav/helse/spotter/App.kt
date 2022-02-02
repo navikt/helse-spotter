@@ -12,7 +12,7 @@ fun main() {
     RapidsCliApplication(ConsumerProducerFactory(AivenConfig.default)).apply {
         MvpOverstyring("overstyr_inntekt").registrer(this)
         MvpOverstyring("overstyr_tidslinje").registrer(this)
-        MvpGodkjenningFlereArbeidsgivere().registrer(this)
+        MvpGodkjenning().registrer(this)
     }.start(
         "tbd-spotter-v1",
         listOf("tbd.rapid.v1"),
