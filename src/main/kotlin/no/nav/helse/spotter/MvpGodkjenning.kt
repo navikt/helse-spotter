@@ -12,8 +12,7 @@ internal class MvpGodkjenning(
     private val målingFerdig: (målingsresultat: Målingsresultat) -> Unit = {
         logger.info(it.toString())
         treghetHistogram.labels("Godkjenning").observe(Duration.between(it.startet, it.ferdig).toSeconds().toDouble())
-    }
-) {
+    }) {
 
     private companion object {
         private val logger = LoggerFactory.getLogger(MvpGodkjenning::class.java)
@@ -21,19 +20,15 @@ internal class MvpGodkjenning(
 
     private val målinger = mutableListOf<Måling>()
 
-    private fun oppdaterBasertPåVedtaksperiodeId(vedtaksperiodeId: UUID, oppdatert:(måling: Måling) -> Måling) =
-        målinger.indexOfFirst {
-            it.kjennerTilVedtaksperiodeId(vedtaksperiodeId)
-        }.takeIf { it >= 0 }?.also { index ->
-            målinger[index] = oppdatert(målinger[index])
-        }?.let { målinger[it] }
+    private fun oppdaterBasertPåVedtaksperiodeId(vedtaksperiodeId: UUID, oppdater: (måling: Måling) -> Unit) =
+        målinger.firstOrNull { it.kjennerTilVedtaksperiodeId(vedtaksperiodeId) }?.also { måling ->
+            oppdater(måling)
+        }
 
-    private fun oppdaterBasertPåEventId(eventId: UUID, oppdatert:(måling: Måling) -> Måling) =
-        målinger.indexOfFirst {
-            it.kjennerTilEventId(eventId)
-        }.takeIf { it >= 0 }?.also { index ->
-            målinger[index] = oppdatert(målinger[index])
-        }?.let { målinger[it] }
+    private fun oppdaterBasertPåEventId(eventId: UUID, oppdatert: (måling: Måling) -> Unit) =
+        målinger.firstOrNull { it.kjennerTilEventId(eventId) }?.also { måling ->
+            oppdatert(måling)
+        }
 
     private fun håndterGodkjenningsbehov(behov: Godkjenningsbehov) {
         when {
@@ -122,22 +117,10 @@ internal class MvpGodkjenning(
         private val oppgaveOpprettet = mutableListOf<OppgaveOpprettet>()
         private val events get() = godkjenningsbehov + vedtaksperiodeEndret + saksbehandlerløsninger + oppgaveOpprettet
 
-        fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) : Måling {
-            this.vedtaksperiodeEndret.add(vedtaksperiodeEndret)
-            return this
-        }
-        fun leggTil(godkjenningsbehov: Godkjenningsbehov) : Måling {
-            this.godkjenningsbehov.add(godkjenningsbehov)
-            return this
-        }
-        fun leggTil(saksbehandlerløsning: Saksbehandlerløsning) : Måling {
-            saksbehandlerløsninger.add(saksbehandlerløsning)
-            return this
-        }
-        fun leggTil(oppgaveOpprettet: OppgaveOpprettet) : Måling {
-            this.oppgaveOpprettet.add(oppgaveOpprettet)
-            return this
-        }
+        fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) = this.vedtaksperiodeEndret.add(vedtaksperiodeEndret)
+        fun leggTil(godkjenningsbehov: Godkjenningsbehov) = this.godkjenningsbehov.add(godkjenningsbehov)
+        fun leggTil(saksbehandlerløsning: Saksbehandlerløsning) = saksbehandlerløsninger.add(saksbehandlerløsning)
+        fun leggTil(oppgaveOpprettet: OppgaveOpprettet) = this.oppgaveOpprettet.add(oppgaveOpprettet)
 
         fun kjennerTilVedtaksperiodeId(vedtaksperiodeId: UUID) =
             godkjenningsbehov.any { it.vedtaksperiodeId == vedtaksperiodeId } ||
@@ -145,9 +128,7 @@ internal class MvpGodkjenning(
             vedtaksperiodeEndret.any { it.vedtaksperiodeId == vedtaksperiodeId }
 
         fun kjennerTilEventId(id: UUID) =
-            events.any { it.id == id } ||
-            saksbehandlerløsninger.any { it.hendelseId == it.id } ||
-            oppgaveOpprettet.any { it.hendelseId == it.id }
+            events.any { it.eventIds.contains(id) }
 
         fun måling() = events.firstOrNull { it.navn == "saksbehandler_løsning" }?.let { saksbehadlerløsning ->
             Målingsresultat(
@@ -164,6 +145,7 @@ internal class MvpGodkjenning(
         val vedtaksperiodeId = node.vedtaksperiodeId
         val forårsaketAv = node.forårsaketAv
         val aktiveVedtaksperioder = node["Godkjenning"].path("aktiveVedtaksperioder").map { UUID.fromString(it.asText()) }.toSet()
+        override val eventIds = setOf(id, forårsaketAv)
         init {
             info["vedtaksperiodeId"] = vedtaksperiodeId
             info["forårsaketAv"] = forårsaketAv
@@ -178,6 +160,7 @@ internal class MvpGodkjenning(
         val forårsaketAv = node.forårsaketAv
         val gjeldendeTilstand = node.path("gjeldendeTilstand").asText()
         val forrigeTilstand = node.path("forrigeTilstand").asText()
+        override val eventIds = setOf(id, forårsaketAv)
         init {
             info["vedtaksperiodeId"] = vedtaksperiodeId
             info["forårsaketAv"] = forårsaketAv
@@ -190,6 +173,7 @@ internal class MvpGodkjenning(
         node: JsonNode
     ) : Event(node.id, node.opprettet, node.eventName) {
         val hendelseId = UUID.fromString(node.path("hendelseId").asText())
+        override val eventIds = setOf(id, hendelseId)
         init {
             info["hendelseId"] = hendelseId
         }
@@ -199,6 +183,7 @@ internal class MvpGodkjenning(
         node: JsonNode
     ) : Event(node.id, node.opprettet, node.eventName) {
         val hendelseId = UUID.fromString(node.path("hendelseId").asText())
+        override val eventIds = setOf(id, hendelseId)
         init {
             info["hendelseId"] = hendelseId
         }

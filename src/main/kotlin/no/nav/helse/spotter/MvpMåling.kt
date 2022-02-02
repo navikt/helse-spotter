@@ -76,6 +76,7 @@ internal open class Event(
         put("id", id)
         put("opprettet", "$opprettet")
     }
+    open val eventIds = setOf(id)
     override fun toString() = jacksonObjectMapper().writeValueAsString(info)
 }
 
