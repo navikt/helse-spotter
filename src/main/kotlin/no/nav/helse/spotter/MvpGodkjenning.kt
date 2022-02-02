@@ -33,37 +33,42 @@ internal class MvpGodkjenning(
             oppdater(måling)
         }
 
-    private fun håndterGodkjenning(godkjenning: Godkjenning) {
-        // Rydder opp for hvert Godkjenningsevent
+    private fun ryddIMålinger() {
         målinger.removeIf { måling ->
-            måling.kanSlettes().also { slettes -> if (slettes) {
-                logger.info("Sletter eksisterende måling ${måling.målingId} som ikke har kommet noen veg på 2 timer" + måling.events.formater())
-            }}
+            måling.kanSlettes().also { slettes ->
+                if (slettes) {
+                    logger.info("Sletter eksisterende måling ${måling.målingId} som ikke har kommet noen veg på 2 timer" + måling.events.formater())
+                }
+            }
         }
+    }
+
+    private fun håndterGodkjenning(godkjenning: Godkjenning) {
         if (godkjenning.slettMåling) {
             målinger.removeIf {
                 it.kjennerTilEventId(godkjenning.id) ||
                 it.kjennerTilEventId(godkjenning.forårsaketAv) ||
                 it.kjennerTilVedtaksperiodeId(godkjenning.vedtaksperiodeId)
             }
-            return
+            return ryddIMålinger()
         }
-
 
         if (oppdaterMålingBasertPåVedtaksperiodeId(godkjenning.vedtaksperiodeId) {
                 logger.info("Utfyller eksisterende måling ${it.målingId} med ${godkjenning.navn}=$godkjenning (basert på vedtaksperiodeId)")
                 it.leggTil(godkjenning)
-            } != null) return
+            } != null) return ryddIMålinger()
 
         if (oppdaterMålingBasertPåEventId(godkjenning.forårsaketAv) {
                 logger.info("Utfyller eksisterende måling ${it.målingId} med ${godkjenning.navn}=$godkjenning (basert på forårsaketAv)")
                 it.leggTil(godkjenning)
-            } != null) return
+            } != null) return ryddIMålinger()
 
-        oppdaterMålingBasertPåEventId(godkjenning.id) {
-            logger.info("Utfyller eksisterende måling ${it.målingId} med ${godkjenning.navn}=$godkjenning (basert på eventId)")
-            it.leggTil(godkjenning)
-        }
+        if (oppdaterMålingBasertPåEventId(godkjenning.id) {
+                logger.info("Utfyller eksisterende måling ${it.målingId} med ${godkjenning.navn}=$godkjenning (basert på eventId)")
+                it.leggTil(godkjenning)
+            } != null) return ryddIMålinger()
+
+        ryddIMålinger()
     }
 
     private fun håndterVedtaksperiodeEndret(event: VedtaksperiodeEndret) {
@@ -81,7 +86,7 @@ internal class MvpGodkjenning(
     private fun håndterSaksbehandlerløsning(event: Saksbehandlerløsning) {
         val nyMåling = Måling(event)
         logger.info("Starter ny måling ${nyMåling.målingId} fra Saksbehandlerløsning=$event")
-        målinger.add(Måling(event))
+        målinger.add(nyMåling)
     }
 
     private fun håndterOppgaveOpprettet(event: OppgaveOpprettet) =
@@ -140,7 +145,6 @@ internal class MvpGodkjenning(
     }
 
 
-
     data class Målingsresultat(
         val navn: String,
         val events: List<Event>,
@@ -164,12 +168,12 @@ internal class MvpGodkjenning(
         fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) = this.vedtaksperiodeEndret.add(vedtaksperiodeEndret)
         fun leggTil(godkjenning: Godkjenning) = this.godkjenningsbehov.add(godkjenning)
         fun leggTil(oppgaveOpprettet: OppgaveOpprettet) = this.oppgaveOpprettet.add(oppgaveOpprettet)
-        fun kanSlettes() = now() > saksbehandlerløsning.opprettet.plusHours(2)
+        fun kanSlettes() = now() > events.maxByOrNull { it.opprettet }!!.opprettet.plusHours(2)
 
         fun kjennerTilVedtaksperiodeId(vedtaksperiodeId: UUID) =
             godkjenningsbehov.any { it.vedtaksperiodeId == vedtaksperiodeId } ||
-            godkjenningsbehov.any { it.aktiveVedtaksperioder.contains(vedtaksperiodeId) } ||
-            vedtaksperiodeEndret.any { it.vedtaksperiodeId == vedtaksperiodeId }
+                godkjenningsbehov.any { it.aktiveVedtaksperioder.contains(vedtaksperiodeId) } ||
+                vedtaksperiodeEndret.any { it.vedtaksperiodeId == vedtaksperiodeId }
 
         fun kjennerTilEventId(id: UUID) =
             events.any { it.eventIds.contains(id) }
@@ -257,7 +261,8 @@ internal class MvpGodkjenning(
         }
     }
 }
-private fun List<Event>.formater() : String {
+
+private fun List<Event>.formater(): String {
     if (isEmpty()) return "tom"
     val første = first()
     return "\n-> " + joinToString("\n-> ") {

@@ -95,6 +95,7 @@ internal class MvpGodkjenningTest {
                 "Godkjenningsbehov",
                 "oppgave_opprettet"
             ), målinger.first().events.map { it.navn })
+        assertEquals("GodkjenningFlereArbeidsgivere", målinger.first().navn)
         println(målinger.first())
     }
 
@@ -145,7 +146,7 @@ internal class MvpGodkjenningTest {
           "vedtaksperiodeId": "$vedtaksperiodeId",
           "Godkjenning": {
             "aktiveVedtaksperioder": ${aktiveVedtaksperioder.map { """{"vedtaksperiodeId": "$it"}""" }},
-            "inntektskilde": "EN_ARBEIDSGIVER"
+            "inntektskilde": "FLERE_ARBEIDSGIVERE"
           }
         }
     """
