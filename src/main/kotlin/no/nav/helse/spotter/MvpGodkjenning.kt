@@ -60,7 +60,8 @@ internal class MvpGodkjenning(
                 validate { _, node, _ -> "Godkjenning" in node.path("@behov").map(JsonNode::asText) }
                 validate { _, node, _ -> !node.hasNonNull("@løsning") } // bare uløste behov
                 validate(textFieldValidation("vedtaksperiodeId"))
-                validate{ _, node, _ -> node.path("Godkjenning").path("inntektskilde").asText() == "FLERE_ARBEIDSGIVERE"}
+                validate { _, node, _ -> node.path("Godkjenning").path("inntektskilde").asText() == "FLERE_ARBEIDSGIVERE" }
+                validate { _, node, _ -> node.path("Godkjenning").path("aktiveVedtaksperioder").isArray }
                 onMessage { _, node ->
                     håndterGodkjenningsbehov(Godkjenningsbehov(node))
                 }
@@ -103,9 +104,9 @@ internal class MvpGodkjenning(
         val events: List<Event>,
         val startet: LocalDateTime,
         val ferdig: LocalDateTime) {
-        override fun toString() = "Måling for godkjenning\n" +
+        override fun toString() = "Måling for godkjenning: tok totalt ${Duration.between(startet, ferdig).formater()}\n-> " +
             events.joinToString("\n-> ") {
-                if (it.opprettet < startet) "${it.navn} ($it)"
+                if (it.opprettet < startet) "${it.navn} - Før måling startet ($it)"
                 else "${it.navn} - ${Duration.between(startet, it.opprettet).formater()} ($it)"
             }
     }
@@ -116,6 +117,7 @@ internal class MvpGodkjenning(
         private val saksbehandlerløsninger = mutableListOf<Saksbehandlerløsning>()
         private val oppgaveOpprettet = mutableListOf<OppgaveOpprettet>()
         private val events get() = godkjenningsbehov + vedtaksperiodeEndret + saksbehandlerløsninger + oppgaveOpprettet
+
         fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) : Måling {
             this.vedtaksperiodeEndret.add(vedtaksperiodeEndret)
             return this
@@ -135,7 +137,7 @@ internal class MvpGodkjenning(
 
         fun kjennerTilVedtaksperiodeId(vedtaksperiodeId: UUID) =
             godkjenningsbehov.any { it.vedtaksperiodeId == vedtaksperiodeId } ||
-            godkjenningsbehov.any { it.aktiveVedtaksperioder.contains(vedtaksperiodeId)} ||
+            godkjenningsbehov.any { it.aktiveVedtaksperioder.contains(vedtaksperiodeId) } ||
             vedtaksperiodeEndret.any { it.vedtaksperiodeId == vedtaksperiodeId }
 
         fun kjennerTilEventId(id: UUID) =
