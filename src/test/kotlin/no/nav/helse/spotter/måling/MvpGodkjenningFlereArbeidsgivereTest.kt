@@ -111,7 +111,7 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
           "@behov": ["Godkjenning"],
           "vedtaksperiodeId": "$vedtaksperiodeId",
           "Godkjenning": {
-            "aktiveVedtaksperioder": ${aktiveVedtaksperioder.map { "\"$it\"" }},
+            "aktiveVedtaksperioder": ${aktiveVedtaksperioder.map { """{"vedtaksperiodeId": "$it"}""" }},
             "inntektskilde": "FLERE_ARBEIDSGIVERE"
           }
         }

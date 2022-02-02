@@ -173,8 +173,7 @@ internal class MvpOverstyring(private val overstyringEvent: String) {
             val siste = it.last().third
             val tidsbruk = Duration.between(første, siste)
             treghetHistogram.labels(overstyringEvent).observe(tidsbruk.toSeconds().toDouble())
-            logger.info("Tidsbruk for $overstyringEvent: ${tidsbruk.formater()}")
-            logger.info(it.joinToString(separator = "\n-> ") { (id, eventName, opprettet) ->
+            logger.info("Måling for $overstyringEvent: tok totalt ${tidsbruk.formater()}\n->" + it.joinToString(separator = "\n-> ") { (id, eventName, opprettet) ->
                 "$eventName ($id) - ${Duration.between(første, opprettet).formater()}"
             })
         }

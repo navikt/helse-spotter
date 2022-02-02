@@ -169,7 +169,7 @@ internal class MvpGodkjenningFlereArbeidsgivere(
     ) : Event(node.id, node.opprettet, "@behov.Godkjenning") {
         val vedtaksperiodeId = node.vedtaksperiodeId
         val forårsaketAv = node.forårsaketAv
-        val aktiveVedtaksperioder = node["Godkjenning"].path("aktiveVedtaksperioder").map { UUID.fromString(it.asText()) }.toSet()
+        val aktiveVedtaksperioder = node["Godkjenning"].path("aktiveVedtaksperioder").map { UUID.fromString(it.path("vedtaksperiodeId").asText()) }.toSet()
         override val eventIds = setOf(id, forårsaketAv)
         init {
             info["vedtaksperiodeId"] = vedtaksperiodeId
