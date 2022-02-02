@@ -74,6 +74,7 @@ internal open class Event(
 ) {
     protected val info = mutableMapOf<String, Any>().apply {
         put("id", id)
+        put("navn", navn)
         put("opprettet", "$opprettet")
     }
     open val eventIds = setOf(id)

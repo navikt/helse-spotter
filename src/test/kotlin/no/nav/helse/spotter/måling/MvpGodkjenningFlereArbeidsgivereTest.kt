@@ -27,23 +27,24 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
         val vedtaksperiodeId1 = UUID.randomUUID()
         val godkjenningId2 = UUID.randomUUID()
         val vedtaksperiodeId2 = UUID.randomUUID()
-
         val koblingHendelseY = UUID.randomUUID()
 
-        // Spleis sender ut godkjenningsbehov på vedtaksperiode 1
+        assertEquals(0, måling.antallPågåendeMålinger())
+        // Måling starter når saksbehandler sender løsning for godkjenning av vedtaksperiode 1 (Spesialist)
         testRapidsCliApplication.send(
-            godkjenningsbehov(
-                id = godkjenningId1,
-                vedtaksperiodeId = vedtaksperiodeId1,
-                aktiveVedtaksperioder = setOf(vedtaksperiodeId2)
+            saksbehandlerløsning(
+                hendelseId = godkjenningId1
             )
         )
         assertEquals(1, måling.antallPågåendeMålinger())
 
-        // Måling starter når saksbehandler sender løsning for godkjenning av vedtaksperiode 1
+        // Løsning på godkjenningsbehov på vedtaksperiode 1 (Spesialist)
         testRapidsCliApplication.send(
-            saksbehandlerløsning(
-                hendelseId = godkjenningId1
+            godkjenningsbehov(
+                medLøsning = true,
+                id = godkjenningId1,
+                vedtaksperiodeId = vedtaksperiodeId1,
+                aktiveVedtaksperioder = setOf(vedtaksperiodeId2)
             )
         )
 
@@ -68,6 +69,7 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
         // Spleis sender ut godkjenningsbehov på vedtaksperiode 2
         testRapidsCliApplication.send(
             godkjenningsbehov(
+                medLøsning = false,
                 id = godkjenningId2,
                 vedtaksperiodeId = vedtaksperiodeId2,
                 aktiveVedtaksperioder = emptySet()
@@ -75,6 +77,8 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
         )
 
         assertEquals(1, måling.antallPågåendeMålinger())
+        assertEquals(0, målinger.size)
+
         // Måling ferdig når det blir opprettet oppgave på Vedtaksperiode 2
         testRapidsCliApplication.send(
             oppgaveOpprettet(godkjenningId2)
@@ -82,25 +86,50 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
 
         assertEquals(0, måling.antallPågåendeMålinger())
         assertEquals(1, målinger.size)
-        assertEquals(listOf("@behov.Godkjenning","saksbehandler_løsning", "vedtaksperiode_endret", "vedtaksperiode_endret", "@behov.Godkjenning", "oppgave_opprettet"), målinger.first().events.map { it.navn })
+        assertEquals(
+            listOf(
+                "saksbehandler_løsning",
+                "Godkjenningsløsning",
+                "vedtaksperiode_endret",
+                "vedtaksperiode_endret",
+                "Godkjenningsbehov",
+                "oppgave_opprettet"
+            ), målinger.first().events.map { it.navn })
         println(målinger.first())
     }
 
     @Test
-    fun `godkjenningsbehov uten andre aktive vedtaksperioder starter ingen måling`() {
+    fun `sletter måling om det er løsning uten aktive vedtaksperioder`() {
+        assertEquals(0, måling.antallPågåendeMålinger())
+        val godkjenningId = UUID.randomUUID()
+        testRapidsCliApplication.send(
+            saksbehandlerløsning(
+                hendelseId = godkjenningId
+            )
+        )
+        assertEquals(1, måling.antallPågåendeMålinger())
+
         testRapidsCliApplication.send(
             godkjenningsbehov(
-                id = UUID.randomUUID(),
+                medLøsning = true,
+                id = godkjenningId,
                 vedtaksperiodeId = UUID.randomUUID(),
                 aktiveVedtaksperioder = emptySet()
             )
         )
         assertEquals(0, måling.antallPågåendeMålinger())
         assertEquals(0, målinger.size)
+
     }
 
     @Language("JSON")
-    private fun godkjenningsbehov(id: UUID, vedtaksperiodeId: UUID, aktiveVedtaksperioder: Set<UUID>, forårsaketAv: UUID = UUID.randomUUID()) = """
+    private fun godkjenningsbehov(
+        id: UUID,
+        vedtaksperiodeId: UUID,
+        aktiveVedtaksperioder: Set<UUID>,
+        forårsaketAv: UUID = UUID.randomUUID(),
+        medLøsning: Boolean
+    ) = """
         {
           "@event_name": "behov",
           "@id": "$id",
@@ -109,6 +138,10 @@ internal class MvpGodkjenningFlereArbeidsgivereTest {
             "id": "$forårsaketAv"
           },
           "@behov": ["Godkjenning"],
+          ${when (medLøsning) {
+              true -> """"@løsning": {"Godkjenning": {"foo": "bar"}},"""
+              false -> ""
+          }}
           "vedtaksperiodeId": "$vedtaksperiodeId",
           "Godkjenning": {
             "aktiveVedtaksperioder": ${aktiveVedtaksperioder.map { """{"vedtaksperiodeId": "$it"}""" }},
