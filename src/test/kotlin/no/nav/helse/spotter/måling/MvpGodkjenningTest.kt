@@ -140,7 +140,7 @@ internal class MvpGodkjenningTest {
           },
           "@behov": ["Godkjenning"],
           ${when (medLøsning) {
-              true -> """"@løsning": {"Godkjenning": {"foo": "bar"}},"""
+              true -> """"@løsning": {"Godkjenning": {"godkjenttidspunkt": "${LocalDateTime.now()}"}},"""
               false -> ""
           }}
           "vedtaksperiodeId": "$vedtaksperiodeId",

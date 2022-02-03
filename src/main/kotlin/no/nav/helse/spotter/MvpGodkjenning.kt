@@ -196,7 +196,7 @@ internal class MvpGodkjenning(
 
     private class Godkjenning(
         node: JsonNode
-    ) : Event(node.id, node.opprettet, node.eventNavn()) {
+    ) : Event(node.id, node.godkjenttidspunktEllerOpprettet(), node.eventNavn()) {
         val vedtaksperiodeId = node.vedtaksperiodeId
         val forårsaketAv = node.forårsaketAv
         val aktiveVedtaksperioder = node.path("Godkjenning").path("aktiveVedtaksperioder")
@@ -215,6 +215,10 @@ internal class MvpGodkjenning(
             private const val BEHOV = "Godkjenningsbehov"
             private const val LØSNING = "Godkjenningsløsning"
             private fun JsonNode.harLøsning() = path("@løsning").path("Godkjenning").isObject
+            private fun JsonNode.godkjenttidspunktEllerOpprettet() = when (harLøsning()) {
+                true -> LocalDateTime.parse(path("@løsning").path("Godkjenning").path("godkjenttidspunkt").asText())
+                false -> opprettet
+            }
             private fun JsonNode.eventNavn() = when (harLøsning()) {
                 true -> LØSNING
                 false -> BEHOV
@@ -270,4 +274,3 @@ private fun List<Event>.formater(): String {
         else "${it.navn} - ${Duration.between(første.opprettet, it.opprettet).formater()} ($it)"
     }
 }
-
