@@ -39,14 +39,16 @@ internal class MvpGodkjenningTest {
         assertEquals(1, måling.antallPågåendeMålinger())
 
         // Løsning på godkjenningsbehov på vedtaksperiode 1 (Spesialist)
-        testRapidsCliApplication.send(
-            godkjenningsbehov(
-                medLøsning = true,
-                id = godkjenningId1,
-                vedtaksperiodeId = vedtaksperiodeId1,
-                aktiveVedtaksperioder = setOf(vedtaksperiodeId2)
+        repeat(10) {
+            testRapidsCliApplication.send(
+                godkjenningsbehov(
+                    medLøsning = true,
+                    id = godkjenningId1,
+                    vedtaksperiodeId = vedtaksperiodeId1,
+                    aktiveVedtaksperioder = setOf(vedtaksperiodeId2)
+                )
             )
-        )
+        }
 
         // Vedtaksperiode 1 går til Avsluttet i Spleis
         testRapidsCliApplication.send(

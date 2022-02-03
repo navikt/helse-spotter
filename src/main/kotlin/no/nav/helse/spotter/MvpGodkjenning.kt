@@ -21,6 +21,7 @@ internal class MvpGodkjenning(
     }
 
     private val målinger = mutableListOf<Måling>()
+
     internal fun antallPågåendeMålinger() = målinger.size
 
     private fun oppdaterMålingBasertPåVedtaksperiodeId(vedtaksperiodeId: UUID, oppdater: (måling: Måling) -> Unit) =
@@ -84,6 +85,7 @@ internal class MvpGodkjenning(
     }
 
     private fun håndterSaksbehandlerløsning(event: Saksbehandlerløsning) {
+        if (målinger.any { it.gjelderSakbehandlingsløsning(event) }) return
         val nyMåling = Måling(event)
         logger.info("Starter ny måling ${nyMåling.målingId} fra Saksbehandlerløsning=$event")
         målinger.add(nyMåling)
@@ -165,10 +167,15 @@ internal class MvpGodkjenning(
         private val oppgaveOpprettet = mutableListOf<OppgaveOpprettet>()
         val events get() = godkjenningsbehov + vedtaksperiodeEndret + oppgaveOpprettet + saksbehandlerløsning
 
-        fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) = this.vedtaksperiodeEndret.add(vedtaksperiodeEndret)
-        fun leggTil(godkjenning: Godkjenning) = this.godkjenningsbehov.add(godkjenning)
-        fun leggTil(oppgaveOpprettet: OppgaveOpprettet) = this.oppgaveOpprettet.add(oppgaveOpprettet)
+        fun leggTil(vedtaksperiodeEndret: VedtaksperiodeEndret) = this.vedtaksperiodeEndret.leggTilEvent(vedtaksperiodeEndret)
+        fun leggTil(godkjenning: Godkjenning) = this.godkjenningsbehov.leggTilEvent(godkjenning)
+        fun leggTil(oppgaveOpprettet: OppgaveOpprettet) = this.oppgaveOpprettet.leggTilEvent(oppgaveOpprettet)
         fun kanSlettes() = now() > events.maxByOrNull { it.opprettet }!!.opprettet.plusHours(2)
+
+        private fun <T : Event>MutableList<T>.leggTilEvent(event: T) {
+            if (any { it.id == event.id }) return
+            add(event)
+        }
 
         fun kjennerTilVedtaksperiodeId(vedtaksperiodeId: UUID) =
             godkjenningsbehov.any { it.vedtaksperiodeId == vedtaksperiodeId } ||
@@ -177,6 +184,9 @@ internal class MvpGodkjenning(
 
         fun kjennerTilEventId(id: UUID) =
             events.any { it.eventIds.contains(id) }
+
+        fun gjelderSakbehandlingsløsning(saksbehandlerløsning: Saksbehandlerløsning) =
+            this.saksbehandlerløsning.id == saksbehandlerløsning.id
 
         fun måling(): Målingsresultat {
             val sortertPåTid = events.sortedBy { it.opprettet }
