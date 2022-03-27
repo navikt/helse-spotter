@@ -32,7 +32,11 @@ internal class MeldingsoppsamlerRiver {
                     "ping",
                     "pong",
                     "subsumsjon",
-                    "app_status"
+                    "app_status",
+                    "planlagt_påminnelse",
+                    "påminnelse",
+                    "utbetalingpåminnelse",
+                    "person_påminnelse"
                 ))
                 onMessage { _, node ->
                     meldingsoppsamler.leggTil(Melding(
