@@ -11,18 +11,16 @@ internal class Meldingsgruppe(melding: Melding) {
     private val meldinger = mutableListOf(melding.somMeldingMedIder())
 
     internal fun leggTil(melding: Melding): Meldingsgruppe? {
-        if (meldinger.any { it.harId(melding.id) }) return this
-
         val meldingMedIder = melding.somMeldingMedIder()
 
         if (meldinger.none { it.kjennerTil(meldingMedIder) }) return null
 
         meldinger.add(meldingMedIder)
-        logger.info("Meldingsgruppe[$id] inneholder nå ${meldinger.size} meldinger")
+        logger.info("Meldingsgruppe[$id] inneholder nå ${meldinger.size} meldinge(r)")
         return this
     }
 
-    internal fun meldinger() = meldinger.map { it.somMelding() }.sortedBy { it.tidspunkt }
+    internal fun meldinger() = meldinger.map { it.somMelding() }.sortedBy { it.deltaker.tidspunkt }
 
     internal fun oppdatertEtter(tidspunkt: LocalDateTime) = meldinger.any { it.oppdatertEtter(tidspunkt) }
 
@@ -30,22 +28,21 @@ internal class Meldingsgruppe(melding: Melding) {
         private val id: UUID,
         private val navn: String,
         private val payload: String,
-        private val tidspunkt: LocalDateTime) {
+        private val deltaker: Deltaker) {
         private val ider = UuidLookup.lookup(payload).plus(id).toSet()
         private fun kjennerTil(ider: Set<UUID>) = this.ider.intersect(ider).isNotEmpty()
-        fun harId(id: UUID) = this.id == id
         fun kjennerTil(melding: MeldingMedIder) = kjennerTil(melding.ider)
-        fun oppdatertEtter(tidspunkt: LocalDateTime) = this.tidspunkt > tidspunkt
+        fun oppdatertEtter(tidspunkt: LocalDateTime) = this.deltaker.tidspunkt > tidspunkt
         companion object {
             fun Melding.somMeldingMedIder() = MeldingMedIder(
                 id = id,
-                tidspunkt = tidspunkt,
+                deltaker = deltaker,
                 navn = navn,
                 payload = payload
             )
             fun MeldingMedIder.somMelding() = Melding(
                 id = id,
-                tidspunkt = tidspunkt,
+                deltaker = deltaker,
                 navn = navn,
                 payload = payload
             )

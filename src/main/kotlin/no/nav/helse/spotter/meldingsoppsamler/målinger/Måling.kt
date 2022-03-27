@@ -7,19 +7,20 @@ import java.time.Duration
 import java.time.LocalDateTime
 
 internal abstract class Måling(
-    private val fra: String,
-    private val til: String,
+    private val navn : String,
+    private val fra: (melding: Melding) -> Boolean,
+    private val til: (melding: Melding) -> Boolean,
     private val erAktuell: (måling: List<Melding>) -> Boolean = { true }
 ) : MeldingsgruppeListener {
 
     override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) {
-        if (nyMelding.navn != til) return
-        val fraIndex = meldinger.indexOfLastOrNull { it.navn == fra } ?: return
-        val tilIndex = meldinger.indexOfLastOrNull { it.navn == til } ?: return
+        if (!til(nyMelding)) return
+        val fraIndex = meldinger.indexOfLastOrNull(fra) ?: return
+        val tilIndex = meldinger.indexOfLastOrNull(til) ?: return
         if (fraIndex <= tilIndex) return
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return
-        logger.info(måling.formater())
+        logger.info(måling.formater(navn))
     }
 
     internal companion object {
@@ -31,15 +32,17 @@ internal abstract class Måling(
             return index
         }
 
-        private fun Duration.formater() = "${toSeconds()} sekunder & ${toMillisPart()} millisekunder"
+        private fun String.pad() = padEnd(35, ' ')
+        private fun Duration.formater() = "${toSeconds()} sekunder & ${toMillisPart()} millisekunder".pad()
+        private fun LocalDateTime.formater() = "$this".pad()
 
-        internal fun List<Melding>.formater() : String {
-            val header = "Måling fra ${first().navn} til ${last().navn} tok ${Duration.between(first().tidspunkt, last().tidspunkt).formater()}"
+        internal fun List<Melding>.formater(navn: String) : String {
+            val header = "Måling $navn tok ${Duration.between(first().deltaker.tidspunkt, last().deltaker.tidspunkt).formater()}"
             var forrigeTidspunkt: LocalDateTime? = null
             return "$header\n-> " + joinToString("\n-> ") { melding -> when (forrigeTidspunkt) {
-                null -> "${melding.navn.padEnd(30, ' ')}${melding.id}\t${melding.tidspunkt}"
-                else -> "${melding.navn.padEnd(30, ' ')}${melding.id}\t${Duration.between(forrigeTidspunkt, melding.tidspunkt).formater()}"
-            }.also { forrigeTidspunkt = melding.tidspunkt }}
+                null -> "${melding.navn.pad()}${melding.id}\t${melding.deltaker.tidspunkt.formater()}${melding.deltaker.navn}"
+                else -> "${melding.navn.pad()}${melding.id}\t${Duration.between(forrigeTidspunkt, melding.deltaker.tidspunkt).formater()}${melding.deltaker.navn}"
+            }.also { forrigeTidspunkt = melding.deltaker.tidspunkt }}
         }
     }
 }

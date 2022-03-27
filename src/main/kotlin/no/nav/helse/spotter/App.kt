@@ -1,5 +1,6 @@
 package no.nav.helse.spotter
 
+import no.nav.helse.spotter.meldingsoppsamler.MeldingsoppsamlerRiver
 import no.nav.rapids_and_rivers.cli.AivenConfig
 import no.nav.rapids_and_rivers.cli.ConsumerProducerFactory
 import no.nav.rapids_and_rivers.cli.RapidsCliApplication
@@ -13,6 +14,7 @@ fun main() {
         MvpOverstyring("overstyr_inntekt").registrer(this)
         MvpOverstyring("overstyr_tidslinje").registrer(this)
         MvpGodkjenning().registrer(this)
+        MeldingsoppsamlerRiver().registrer(this)
     }.start(
         "tbd-spotter-v1",
         listOf("tbd.rapid.v1"),
