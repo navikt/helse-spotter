@@ -15,7 +15,7 @@ internal class MålingTest {
         val id2 = UUID.randomUUID()
 
         val testMåling = object : Måling(
-            navn = "testmåling",
+            navn = { "testmåling" },
             fra = { it.id == id1 },
             til = { it.id == id2 }
         ){}
@@ -40,7 +40,7 @@ internal class MålingTest {
     fun `måling fra og til samme melding`() {
 
         val testMåling = object : Måling(
-            navn = "testmåling",
+            navn = { "testmåling" },
             fra = { true },
             til = { true }
         ){}

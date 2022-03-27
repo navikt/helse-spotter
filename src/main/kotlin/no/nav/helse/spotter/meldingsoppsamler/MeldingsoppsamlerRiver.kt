@@ -11,12 +11,17 @@ import no.nav.rapids_and_rivers.cli.RapidsCliApplication
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 internal class MeldingsoppsamlerRiver {
-    private val meldingsoppsamler = Meldingsoppsamler(
+    private val aktiveMålinger = listOf(
         LøseBehovForHistorikk,
         OverstyrInntekt,
         OverstyrTidslinje,
         GodkjenningEnArbeidsgiver,
         GodkjenningFlereArbeidsgivere
+    )
+
+    private val meldingsoppsamler = Meldingsoppsamler(
+        timeoutListener = GenerellMåling,
+        listeners = aktiveMålinger
     )
 
     internal fun registrer(rapidsCliApplication: RapidsCliApplication) {
@@ -42,7 +47,6 @@ internal class MeldingsoppsamlerRiver {
     }
 
     private companion object {
-
         private fun rejectEvents(vararg events: String) =
             events.toList().let { rejectedEvents ->
                 fun (_: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {

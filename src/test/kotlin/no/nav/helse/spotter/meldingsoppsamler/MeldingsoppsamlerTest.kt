@@ -15,20 +15,27 @@ internal class MeldingsoppsamlerTest {
             nå = it.tidspunkt.plusSeconds(30).plusNanos(500000000)
         }
         fun LocalDateTime.deltaker() = Deltaker(navn = "test", tidspunkt = this)
+
+        private val testListener = object : MeldingsgruppeListener {
+            var sisteMeldingsgruppe: List<Melding> = emptyList()
+            override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
+                println("Siste meldingsgruppe ${meldinger.formater()}")
+                this.sisteMeldingsgruppe = meldinger
+                return true
+            }
+        }
+        fun nyMeldingsoppsamler() = Meldingsoppsamler(
+            timeoutListener = object : MeldingsgruppeListener {
+                override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) = true
+            },
+            listeners = listOf(testListener)
+        )
     }
 
-    private val testListener = object : MeldingsgruppeListener {
-        var sisteMeldingsgruppe: List<Melding> = emptyList()
-        override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
-            println("Siste meldingsgruppe ${meldinger.formater()}")
-            this.sisteMeldingsgruppe = meldinger
-            return true
-        }
-    }
 
     @Test
     fun `kobler sammen riktige meldinger`() {
-        val meldingsoppsamler = Meldingsoppsamler(testListener)
+        val meldingsoppsamler = nyMeldingsoppsamler()
 
         val id1 = UUID.randomUUID()
         val melding1 = Melding(id1,"melding1", nesteDeltaker(), "")
@@ -52,18 +59,18 @@ internal class MeldingsoppsamlerTest {
     }
 
     @Test
-    fun `sletter meldingsgrupper som ikke har vært oppdatert på ti minutter`() {
-        val meldingsoppsamler = Meldingsoppsamler(testListener)
+    fun `sletter meldingsgrupper som ikke har vært oppdatert på tretti minutter`() {
+        val meldingsoppsamler = nyMeldingsoppsamler()
         val now = now()
 
         val id1 = UUID.randomUUID()
-        val skalIkkeSlettes = Melding(id1,"skalIkkeSlettes", now.minusMinutes(9).plusSeconds(59).deltaker(), "")
+        val skalIkkeSlettes = Melding(id1,"skalIkkeSlettes", now.minusMinutes(29).plusSeconds(59).deltaker(), "")
         meldingsoppsamler.leggTil(skalIkkeSlettes)
         assertEquals(listOf(skalIkkeSlettes), testListener.sisteMeldingsgruppe)
         assertEquals(1, meldingsoppsamler.antallMeldingsgrupper())
 
         val id2 = UUID.randomUUID()
-        val skalSlettes = Melding(id2,"skalSlettes", now.minusHours(10).deltaker(), "")
+        val skalSlettes = Melding(id2,"skalSlettes", now.minusHours(30).deltaker(), "")
         meldingsoppsamler.leggTil(skalSlettes)
         assertEquals(listOf(skalSlettes), testListener.sisteMeldingsgruppe)
         assertEquals(2, meldingsoppsamler.antallMeldingsgrupper())
@@ -77,7 +84,7 @@ internal class MeldingsoppsamlerTest {
 
     @Test
     fun `melding med samme id legges til flere ganger i samme gruppe`() {
-        val meldingsoppsamler = Meldingsoppsamler(testListener)
+        val meldingsoppsamler = nyMeldingsoppsamler()
 
         val id1 = UUID.randomUUID()
         val melding1 = Melding(id1,"melding1", nesteDeltaker(), "")

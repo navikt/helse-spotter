@@ -1,12 +1,11 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
-import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
-import org.slf4j.LoggerFactory
+import java.time.Duration
 
 internal class Meldingsoppsamler(
-    vararg listeners: MeldingsgruppeListener
+    private val timeoutListener: MeldingsgruppeListener,
+    private val listeners: List<MeldingsgruppeListener>,
 ) {
-    private val listeners = listeners.toList()
     private val meldingsgrupper = mutableListOf<Meldingsgruppe>()
 
     internal fun leggTil(melding: Melding) {
@@ -24,17 +23,13 @@ internal class Meldingsoppsamler(
     internal fun antallMeldingsgrupper() = meldingsgrupper.size
 
     private fun finalize(melding: Melding) {
-        val antallFørSletting = antallMeldingsgrupper()
-        val tidspunkt = melding.deltaker.tidspunkt.minusMinutes(10)
-        meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes && it.meldinger().size >= 10) {
-            logger.info("Sletter mistenkelig stor meldingsgruppe ${it.meldinger().formater()}")
+        val tidspunkt = melding.deltaker.tidspunkt.minus(timeout)
+        meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes) {
+            it.meldinger().let { meldinger -> timeoutListener.onNyMelding(meldinger.last(), meldinger) }
         }}}
-        (antallFørSletting-antallMeldingsgrupper()).takeIf { it > 0 }?.also {
-            logger.info("Slettet $it meldingsgruppe(r) som ikke hadde blitt oppdatert på 10 minutter")
-        }
     }
 
     private companion object {
-        private val logger = LoggerFactory.getLogger(Meldingsoppsamler::class.java)
+        private val timeout = Duration.ofMinutes(30)
     }
 }

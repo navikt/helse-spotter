@@ -7,7 +7,7 @@ import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formatertTotalti
 import org.slf4j.LoggerFactory
 
 internal abstract class Måling(
-    private val navn : String,
+    private val navn: (måling: List<Melding>) -> String,
     private val fra: (melding: Melding) -> Boolean,
     private val til: (melding: Melding) -> Boolean,
     private val erAktuell: (måling: List<Melding>) -> Boolean = { true }
@@ -20,7 +20,7 @@ internal abstract class Måling(
         if (fraIndex > tilIndex) return false
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return false
-        logger.info("Måling $navn tok ${måling.formatertTotaltid()} ${måling.formater()}")
+        logger.info("Måling ${navn(måling)} tok ${måling.formatertTotaltid()} ${måling.formater()}")
         return true
     }
 
