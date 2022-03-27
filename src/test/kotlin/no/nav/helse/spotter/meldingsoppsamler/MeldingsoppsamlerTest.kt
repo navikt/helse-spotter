@@ -1,6 +1,6 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
-import no.nav.helse.spotter.meldingsoppsamler.målinger.Måling.Companion.formater
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -19,9 +19,10 @@ internal class MeldingsoppsamlerTest {
 
     private val testListener = object : MeldingsgruppeListener {
         var sisteKobledeMeldinger: List<Melding> = emptyList()
-        override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) {
-            println(meldinger.formater("Testmåling"))
+        override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
+            println(meldinger.formater("Testmåling tok"))
             this.sisteKobledeMeldinger = meldinger
+            return true
         }
     }
 

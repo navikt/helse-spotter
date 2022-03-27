@@ -1,5 +1,6 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
 import org.slf4j.LoggerFactory
 
 internal class Meldingsoppsamler(
@@ -25,7 +26,9 @@ internal class Meldingsoppsamler(
     private fun finalize(melding: Melding) {
         val antallFørSletting = antallMeldingsgrupper()
         val tidspunkt = melding.deltaker.tidspunkt.minusMinutes(10)
-        meldingsgrupper.removeIf { !it.oppdatertEtter(tidspunkt) }
+        meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes) {
+            logger.info(it.meldinger().formater("Slettet meldingsgruppe etter"))
+        }}}
         logger.info("Inneholder nå ${antallMeldingsgrupper()} meldingsgruppe(r) etter håndtering av ${melding.navn}")
         (antallFørSletting-antallMeldingsgrupper()).takeIf { it > 0 }?.also {
             logger.info("Slettet $it meldingsgruppe(r) som ikke hadde blitt oppdatert på 10 minutter")
