@@ -51,18 +51,18 @@ internal class MeldingsoppsamlerTest {
     }
 
     @Test
-    fun `sletter meldingsgrupper som ikke har vært oppdatert på en time`() {
+    fun `sletter meldingsgrupper som ikke har vært oppdatert på ti minutter`() {
         val meldingsoppsamler = Meldingsoppsamler(testListener)
         val now = now()
 
         val id1 = UUID.randomUUID()
-        val skalIkkeSlettes = Melding(id1,"skalIkkeSlettes", now.minusMinutes(59).plusSeconds(59).deltaker(), "")
+        val skalIkkeSlettes = Melding(id1,"skalIkkeSlettes", now.minusMinutes(9).plusSeconds(59).deltaker(), "")
         meldingsoppsamler.leggTil(skalIkkeSlettes)
         assertEquals(listOf(skalIkkeSlettes), testListener.sisteKobledeMeldinger)
         assertEquals(1, meldingsoppsamler.antallMeldingsgrupper())
 
         val id2 = UUID.randomUUID()
-        val skalSlettes = Melding(id2,"skalSlettes", now.minusHours(1).deltaker(), "")
+        val skalSlettes = Melding(id2,"skalSlettes", now.minusHours(10).deltaker(), "")
         meldingsoppsamler.leggTil(skalSlettes)
         assertEquals(listOf(skalSlettes), testListener.sisteKobledeMeldinger)
         assertEquals(2, meldingsoppsamler.antallMeldingsgrupper())

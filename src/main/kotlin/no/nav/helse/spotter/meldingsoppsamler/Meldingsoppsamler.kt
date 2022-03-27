@@ -24,11 +24,11 @@ internal class Meldingsoppsamler(
 
     private fun finalize(melding: Melding) {
         val antallFørSletting = antallMeldingsgrupper()
-        val tidspunkt = melding.deltaker.tidspunkt.minusHours(1)
+        val tidspunkt = melding.deltaker.tidspunkt.minusMinutes(10)
         meldingsgrupper.removeIf { !it.oppdatertEtter(tidspunkt) }
         logger.info("Inneholder nå ${antallMeldingsgrupper()} meldingsgruppe(r) etter håndtering av ${melding.navn}")
         (antallFørSletting-antallMeldingsgrupper()).takeIf { it > 0 }?.also {
-            logger.info("Slettet $it meldingsgruppe(r) som ikke hadde blitt oppdatert på en time")
+            logger.info("Slettet $it meldingsgruppe(r) som ikke hadde blitt oppdatert på 10 minutter")
         }
     }
 
