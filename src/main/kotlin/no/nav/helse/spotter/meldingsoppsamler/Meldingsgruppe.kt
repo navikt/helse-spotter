@@ -2,12 +2,10 @@ package no.nav.helse.spotter.meldingsoppsamler
 
 import no.nav.helse.spotter.meldingsoppsamler.Meldingsgruppe.MeldingMedIder.Companion.somMelding
 import no.nav.helse.spotter.meldingsoppsamler.Meldingsgruppe.MeldingMedIder.Companion.somMeldingMedIder
-import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 import java.util.*
 
 internal class Meldingsgruppe(melding: Melding) {
-    private val id = UUID.randomUUID()
     private val meldinger = mutableListOf(melding.somMeldingMedIder())
 
     internal fun leggTil(melding: Melding): Meldingsgruppe? {
@@ -16,7 +14,6 @@ internal class Meldingsgruppe(melding: Melding) {
         if (meldinger.none { it.kjennerTil(meldingMedIder) }) return null
 
         meldinger.add(meldingMedIder)
-        logger.info("Meldingsgruppe[$id] inneholder nå ${meldinger.size} meldinge(r)")
         return this
     }
 
@@ -47,9 +44,5 @@ internal class Meldingsgruppe(melding: Melding) {
                 payload = payload
             )
         }
-    }
-
-    private companion object {
-        private val logger = LoggerFactory.getLogger(Meldingsgruppe::class.java)
     }
 }

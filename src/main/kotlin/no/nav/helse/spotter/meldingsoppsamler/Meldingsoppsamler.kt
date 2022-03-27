@@ -29,7 +29,6 @@ internal class Meldingsoppsamler(
         meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes && it.meldinger().size >= 10) {
             logger.info("Sletter mistenkelig stor meldingsgruppe ${it.meldinger().formater()}")
         }}}
-        logger.info("Inneholder nå ${antallMeldingsgrupper()} meldingsgruppe(r) etter håndtering av ${melding.navn}")
         (antallFørSletting-antallMeldingsgrupper()).takeIf { it > 0 }?.also {
             logger.info("Slettet $it meldingsgruppe(r) som ikke hadde blitt oppdatert på 10 minutter")
         }
