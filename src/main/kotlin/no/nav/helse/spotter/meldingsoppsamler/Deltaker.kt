@@ -16,9 +16,7 @@ internal class Deltaker(
             val deltakere = get("system_participating_services") ?: return Deltaker(tidspunkt = opprettet, navn = "Ukjent")
             return deltakere.map { Deltaker(tidspunkt = LocalDateTime.parse(it["time"].asText()), navn = it.get("service").asText()) }.maxByOrNull { it.tidspunkt }!!
         }
-        internal fun JsonNode.antallDeltakere() : Int {
-            val deltakere = get("system_participating_services") ?: return 0
-            return deltakere.size()
-        }
+
+        internal fun JsonNode.antallDeltakere() = get("system_participating_services")?.size() ?: 0
     }
 }

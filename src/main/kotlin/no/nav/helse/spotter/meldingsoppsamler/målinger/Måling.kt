@@ -3,6 +3,7 @@ package no.nav.helse.spotter.meldingsoppsamler.målinger
 import no.nav.helse.spotter.meldingsoppsamler.MeldingsgruppeListener
 import no.nav.helse.spotter.meldingsoppsamler.Melding
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formatertTotaltid
 import org.slf4j.LoggerFactory
 
 internal abstract class Måling(
@@ -19,7 +20,7 @@ internal abstract class Måling(
         if (fraIndex > tilIndex) return false
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return false
-        logger.info(måling.formater("Måling $navn tok"))
+        logger.info("Måling $navn tok ${måling.formatertTotaltid()} ${måling.formater()}")
         return true
     }
 

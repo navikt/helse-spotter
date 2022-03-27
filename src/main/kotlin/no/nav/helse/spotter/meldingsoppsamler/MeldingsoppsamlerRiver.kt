@@ -13,10 +13,10 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 internal class MeldingsoppsamlerRiver {
     private val meldingsoppsamler = Meldingsoppsamler(
         LøseBehovForHistorikk,
-        //OverstyrInntekt,
-        //OverstyrTidslinje,
-        //GodkjenningEnArbeidsgiver,
-        //GodkjenningFlereArbeidsgivere
+        OverstyrInntekt,
+        OverstyrTidslinje,
+        GodkjenningEnArbeidsgiver,
+        GodkjenningFlereArbeidsgivere
     )
 
     internal fun registrer(rapidsCliApplication: RapidsCliApplication) {

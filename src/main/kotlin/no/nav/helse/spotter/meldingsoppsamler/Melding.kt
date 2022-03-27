@@ -18,11 +18,10 @@ internal class Melding(
         private fun String.pad() = padEnd(35, ' ')
         private fun Duration.formater() = "${toSeconds()} sekunder & ${toMillisPart()} millisekunder"
         private fun LocalDateTime.formater() = "$this".pad()
-
-        internal fun List<Melding>.formater(headerPrefix: String) : String {
-            val header = "$headerPrefix ${Duration.between(first().deltaker.tidspunkt, last().deltaker.tidspunkt).formater()}"
+        internal fun List<Melding>.formatertTotaltid() = Duration.between(first().deltaker.tidspunkt, last().deltaker.tidspunkt).formater()
+        internal fun List<Melding>.formater() : String {
             var forrigeTidspunkt: LocalDateTime? = null
-            return "$header\n-> " + joinToString("\n-> ") { melding -> when (forrigeTidspunkt) {
+            return "\n-> " + joinToString("\n-> ") { melding -> when (forrigeTidspunkt) {
                 null -> "${melding.navn.pad()}${melding.id}\t${melding.deltaker.tidspunkt.formater()}${melding.deltaker.navn}"
                 else -> "${melding.navn.pad()}${melding.id}\t${Duration.between(forrigeTidspunkt, melding.deltaker.tidspunkt).formater().pad()}${melding.deltaker.navn}"
             }.also { forrigeTidspunkt = melding.deltaker.tidspunkt }}

@@ -26,8 +26,8 @@ internal class Meldingsoppsamler(
     private fun finalize(melding: Melding) {
         val antallFørSletting = antallMeldingsgrupper()
         val tidspunkt = melding.deltaker.tidspunkt.minusMinutes(10)
-        meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes) {
-            logger.info(it.meldinger().formater("Slettet meldingsgruppe etter"))
+        meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes && it.meldinger().size >= 10) {
+            logger.info("Sletter mistenkelig stor meldingsgruppe ${it.meldinger().formater()}")
         }}}
         logger.info("Inneholder nå ${antallMeldingsgrupper()} meldingsgruppe(r) etter håndtering av ${melding.navn}")
         (antallFørSletting-antallMeldingsgrupper()).takeIf { it > 0 }?.also {
