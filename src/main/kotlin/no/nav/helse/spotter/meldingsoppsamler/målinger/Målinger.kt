@@ -1,52 +1,42 @@
 package no.nav.helse.spotter.meldingsoppsamler.målinger
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import no.nav.helse.spotter.meldingsoppsamler.Deltaker.Companion.antallDeltakere
-
-private val objectMapper = jacksonObjectMapper()
-private fun String.jsonNode() = objectMapper.readTree(this)
-private fun JsonNode.ettespurteBehov() = when (hasNonNull("@behov") && get("@behov") is ArrayNode) {
-    true -> get("@behov").map { it.asText() }
-    false -> emptyList()
-}
+import no.nav.helse.spotter.meldingsoppsamler.TagResolver.typedTag
 
 internal object GenerellMåling : Måling(
-    navn = { "fra ${it.first().navn} -> ${it.last().navn}" },
+    navn = { "${it.first().navn}_til_${it.last().navn}" },
     fra = { true },
     til = { true },
     erAktuell = { it.first().navn != it.last().navn }
 )
 
 internal object OverstyrTidslinje : Måling(
-    navn = { "Overstyring av tidslinje" },
+    navn = { "overstyr_tidslinje" },
     fra = { it.navn == "overstyr_tidslinje" },
     til = { it.navn == "oppgave_opprettet" }
 )
 
 internal object OverstyrInntekt : Måling(
-    navn = { "Overstyring av inntekt" },
+    navn = { "overstyr_inntekt" },
     fra = { it.navn == "overstyr_inntekt" },
     til = { it.navn == "oppgave_opprettet" }
 )
 
 internal object GodkjenningEnArbeidsgiver : Måling(
-    navn = { "Godkjenning av en arbeidsgiver" },
+    navn = { "godkjenning_av_en_arbeidsgiver" },
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
-    erAktuell = { måling -> måling.any { it.payload.contains("EN_ARBEIDSGIVER") }
+    erAktuell = { måling -> måling.any { it.tags.typedTag("enArbeidsgiver") }
 })
 
 internal object GodkjenningFlereArbeidsgivere : Måling(
-    navn = { "Godkjenning av flere arbeidsgivere" },
+    navn = { "godkjenning_av_flere_arbeidsgivere" },
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
-    erAktuell = { måling -> måling.any { it.payload.contains("FLERE_ARBEIDGIVERE") }
+    erAktuell = { måling -> måling.any { it.tags.typedTag("flereArbeidsgivere") }
 })
 
 internal object LøseBehovForHistorikk : Måling(
-    navn = { "Løse behov for historikk" },
-    fra = { it.navn == "behov" && it.payload.jsonNode().let { json -> json.ettespurteBehov().contains("Foreldrepenger") && json.antallDeltakere() == 1 }},
-    til = { it.navn == "behov" && it.payload.jsonNode().let { json -> json.ettespurteBehov().contains("Foreldrepenger") && json.hasNonNull("@final") }}
+    navn = { "løse_behov_for_historikk" },
+    fra = { it.navn == "behov" && it.tags.typedTag<List<String>>("etterspurteBehov").contains("Foreldrepenger") && it.tags.typedTag<Int>("antallDeltakere") == 1 },
+    til = { it.navn == "behov" && it.tags.typedTag<List<String>>("etterspurteBehov").contains("Foreldrepenger") && it.tags.typedTag("@final") },
 )

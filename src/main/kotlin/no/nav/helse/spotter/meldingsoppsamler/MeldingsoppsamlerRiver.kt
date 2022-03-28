@@ -3,15 +3,13 @@ package no.nav.helse.spotter.meldingsoppsamler
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.spotter.*
 import no.nav.helse.spotter.harStandardfelter
-import no.nav.helse.spotter.id
-import no.nav.helse.spotter.meldingsoppsamler.Deltaker.Companion.resolveDeltaker
 import no.nav.helse.spotter.meldingsoppsamler.målinger.*
 import no.nav.rapids_and_rivers.cli.JsonRiver
 import no.nav.rapids_and_rivers.cli.RapidsCliApplication
 import org.apache.kafka.clients.consumer.ConsumerRecord
 
 internal class MeldingsoppsamlerRiver {
-    private val aktiveMålinger = listOf(
+    private val konkreteMålinger = listOf(
         LøseBehovForHistorikk,
         OverstyrInntekt,
         OverstyrTidslinje,
@@ -21,7 +19,7 @@ internal class MeldingsoppsamlerRiver {
 
     private val meldingsoppsamler = Meldingsoppsamler(
         timeoutListener = GenerellMåling,
-        listeners = aktiveMålinger
+        listeners = konkreteMålinger
     )
 
     internal fun registrer(rapidsCliApplication: RapidsCliApplication) {
@@ -39,12 +37,7 @@ internal class MeldingsoppsamlerRiver {
                     "person_påminnelse"
                 ))
                 onMessage { _, node ->
-                    meldingsoppsamler.leggTil(Melding(
-                        id = node.id,
-                        deltaker = node.resolveDeltaker(),
-                        navn = node.eventName,
-                        payload = node.toString()
-                    ))
+                    meldingsoppsamler.leggTil(Melding(node))
                 }
             }
         }
