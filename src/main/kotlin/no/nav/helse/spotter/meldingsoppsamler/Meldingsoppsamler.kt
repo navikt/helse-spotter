@@ -4,20 +4,25 @@ import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
 internal class Meldingsoppsamler(
-    private val timeoutListener: MeldingsgruppeListener,
-    private val listeners: List<MeldingsgruppeListener>,
+    timeoutListener: MeldingsgruppeListener,
+    listeners: List<MeldingsgruppeListener>,
     private val rydde: (tidspunkt: LocalDateTime) -> Boolean = { it.minute % 5 == 0 }
 ) {
+    private val meldingsgruppeListeners = MeldingsgruppeListeners(
+        listeners = listeners,
+        timeoutListener = timeoutListener
+    )
+
     private val meldingsgrupper = mutableListOf<Meldingsgruppe>()
 
     internal fun leggTil(melding: Melding) {
         val eksisterendeKobledeMeldinger = meldingsgrupper.mapNotNull { it.leggTil(melding) }.onEach { eksisterende ->
-            listeners.forEach { listener -> listener.onNyMelding(melding, eksisterende.meldinger()) }
+            meldingsgruppeListeners.onNyMelding(melding, eksisterende.meldinger())
         }
         if (eksisterendeKobledeMeldinger.isNotEmpty()) return finalize(melding)
 
         val ny = Meldingsgruppe(melding).also { meldingsgrupper.add(it) }
-        listeners.forEach { listener -> listener.onNyMelding(melding, ny.meldinger()) }
+        meldingsgruppeListeners.onNyMelding(melding, ny.meldinger())
 
         finalize(melding)
     }
@@ -29,7 +34,7 @@ internal class Meldingsoppsamler(
         if (!rydde(tidspunkt)) return
         val antallMeldingsdgrupperFørSletting = meldingsgrupper.size
         meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes) {
-            it.meldinger().let { meldinger -> timeoutListener.onNyMelding(meldinger.last(), meldinger) }
+            meldingsgruppeListeners.onTimeout(it.meldinger())
         }}}
         (antallMeldingsdgrupperFørSletting - meldingsgrupper.size).takeIf { it > 0 }?.also {
             logger.info("Slettet $it meldingsgruppe(r) som ikke er oppdatert på 10 minutter.")

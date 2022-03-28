@@ -27,9 +27,3 @@ internal object GodkjenningFlereArbeidsgivere : Måling(
     til = { it.navn == "oppgave_opprettet" },
     erAktuell = { måling -> måling.any { it.tags.typedTag("flereArbeidsgivere") }
 })
-
-internal object LøseBehovForHistorikk : Måling(
-    navn = { "løse_behov_for_historikk" },
-    fra = { it.navn == "behov" && it.tags.typedTag<List<String>>("etterspurteBehov").contains("Foreldrepenger") && it.tags.typedTag<Int>("antallDeltakere") == 1 },
-    til = { it.navn == "behov" && it.tags.typedTag<List<String>>("etterspurteBehov").contains("Foreldrepenger") && it.tags.typedTag("@final") },
-)

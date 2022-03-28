@@ -10,7 +10,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 
 internal class MeldingsoppsamlerRiver {
     private val konkreteMålinger = listOf(
-        LøseBehovForHistorikk,
         OverstyrInntekt,
         OverstyrTidslinje,
         GodkjenningEnArbeidsgiver,

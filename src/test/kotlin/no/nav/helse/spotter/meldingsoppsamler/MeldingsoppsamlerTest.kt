@@ -22,14 +22,14 @@ internal class MeldingsoppsamlerTest {
             override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
                 println("Siste meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
                 this.sisteMeldingsgruppe = meldinger
-                return true
+                return false
             }
         }
         fun nyMeldingsoppsamler() = Meldingsoppsamler(
             timeoutListener = object : MeldingsgruppeListener {
                 override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
                     println("Sletter meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
-                    return true
+                    return false
                 }
             },
             listeners = listOf(testListener),
