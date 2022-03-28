@@ -1,5 +1,6 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
+import org.slf4j.LoggerFactory
 import java.time.LocalDateTime
 
 internal class Meldingsoppsamler(
@@ -26,8 +27,15 @@ internal class Meldingsoppsamler(
     private fun finalize(melding: Melding) {
         val tidspunkt = melding.deltaker.tidspunkt.minusMinutes(10)
         if (!rydde(tidspunkt)) return
+        val antallMeldingsdgrupperFørSletting = meldingsgrupper.size
         meldingsgrupper.removeIf { (!it.oppdatertEtter(tidspunkt)).also { slettes -> if (slettes) {
             it.meldinger().let { meldinger -> timeoutListener.onNyMelding(meldinger.last(), meldinger) }
         }}}
+        (antallMeldingsdgrupperFørSletting - meldingsgrupper.size).takeIf { it > 0 }?.also {
+            logger.info("Slettet $it meldingsgruppe(r) som ikke er oppdatert på 10 minutter.")
+        }
+    }
+    private companion object {
+        private val logger = LoggerFactory.getLogger(Meldingsoppsamler::class.java)
     }
 }

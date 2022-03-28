@@ -24,7 +24,7 @@ internal abstract class Måling(
         return true
     }
 
-    internal companion object {
+    private companion object {
         private val logger = LoggerFactory.getLogger(Måling::class.java)
 
         private fun List<Melding>.indexOfLastOrNull(predicate: (melding: Melding) -> Boolean): Int? {

@@ -2,13 +2,6 @@ package no.nav.helse.spotter.meldingsoppsamler.målinger
 
 import no.nav.helse.spotter.meldingsoppsamler.TagResolver.typedTag
 
-internal object GenerellMåling : Måling(
-    navn = { "${it.first().navn}_til_${it.last().navn}" },
-    fra = { true },
-    til = { true },
-    erAktuell = { it.first().navn != it.last().navn }
-)
-
 internal object OverstyrTidslinje : Måling(
     navn = { "overstyr_tidslinje" },
     fra = { it.navn == "overstyr_tidslinje" },

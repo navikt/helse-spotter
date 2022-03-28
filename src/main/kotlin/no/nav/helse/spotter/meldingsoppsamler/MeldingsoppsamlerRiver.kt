@@ -18,7 +18,7 @@ internal class MeldingsoppsamlerRiver {
     )
 
     private val meldingsoppsamler = Meldingsoppsamler(
-        timeoutListener = GenerellMåling,
+        timeoutListener = TimeoutMåling,
         listeners = konkreteMålinger
     )
 

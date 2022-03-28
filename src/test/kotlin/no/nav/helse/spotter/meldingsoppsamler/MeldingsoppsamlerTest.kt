@@ -1,6 +1,7 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formatertTotaltid
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -19,14 +20,17 @@ internal class MeldingsoppsamlerTest {
         private val testListener = object : MeldingsgruppeListener {
             var sisteMeldingsgruppe: List<Melding> = emptyList()
             override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
-                println("Siste meldingsgruppe ${meldinger.formater()}")
+                println("Siste meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
                 this.sisteMeldingsgruppe = meldinger
                 return true
             }
         }
         fun nyMeldingsoppsamler() = Meldingsoppsamler(
             timeoutListener = object : MeldingsgruppeListener {
-                override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) = true
+                override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
+                    println("Sletter meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
+                    return true
+                }
             },
             listeners = listOf(testListener),
             rydde = { true }
