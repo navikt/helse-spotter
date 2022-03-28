@@ -1,9 +1,11 @@
 package no.nav.helse.spotter.meldingsoppsamler.målinger
 
+import io.prometheus.client.Histogram
 import no.nav.helse.spotter.meldingsoppsamler.MeldingsgruppeListener
 import no.nav.helse.spotter.meldingsoppsamler.Melding
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
-import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formatertTotaltid
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formaterDuration
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.totaltid
 import org.slf4j.LoggerFactory
 
 internal abstract class Måling(
@@ -20,17 +22,28 @@ internal abstract class Måling(
         if (fraIndex > tilIndex) return false
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return false
-        logger.info("Måling ${navn(måling)} tok ${måling.formatertTotaltid()} ${måling.formater()}")
+        måling.målingFerdig(navn(måling))
         return true
     }
 
-    private companion object {
+    internal companion object {
         private val logger = LoggerFactory.getLogger(Måling::class.java)
 
         private fun List<Melding>.indexOfLastOrNull(predicate: (melding: Melding) -> Boolean): Int? {
             val index = indexOfLast(predicate)
             if (index < 0) return null
             return index
+        }
+
+        private val rapidMeasurement = Histogram
+            .build("rapid_measurement", "Måler tiden ting tar på rapiden")
+            .labelNames("measurement")
+            .register()
+
+        internal fun List<Melding>.målingFerdig(navn: String) {
+            val totaltid = totaltid()
+            rapidMeasurement.labels(navn).observe(totaltid.toSeconds().toDouble())
+            logger.info("Måling $navn tok ${totaltid.formaterDuration()} ${formater()}")
         }
     }
 }

@@ -1,7 +1,8 @@
 package no.nav.helse.spotter.meldingsoppsamler
 
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
-import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formatertTotaltid
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formaterDuration
+import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.totaltid
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -20,7 +21,7 @@ internal class MeldingsoppsamlerTest {
         private val testListener = object : MeldingsgruppeListener {
             var sisteMeldingsgruppe: List<Melding> = emptyList()
             override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
-                println("Siste meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
+                println("Siste meldingsgruppe ${meldinger.totaltid().formaterDuration()} ${meldinger.formater()}")
                 this.sisteMeldingsgruppe = meldinger
                 return false
             }
@@ -28,12 +29,12 @@ internal class MeldingsoppsamlerTest {
         fun nyMeldingsoppsamler() = Meldingsoppsamler(
             timeoutListener = object : MeldingsgruppeListener {
                 override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>) : Boolean {
-                    println("Sletter meldingsgruppe ${meldinger.formatertTotaltid()} ${meldinger.formater()}")
+                    println("Sletter meldingsgruppe ${meldinger.totaltid().formaterDuration()} ${meldinger.formater()}")
                     return false
                 }
             },
             listeners = listOf(testListener),
-            rydde = { true }
+            skalRydde = { _,_ -> true}
         )
     }
 
