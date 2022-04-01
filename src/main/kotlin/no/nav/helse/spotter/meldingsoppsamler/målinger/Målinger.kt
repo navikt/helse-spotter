@@ -1,6 +1,8 @@
 package no.nav.helse.spotter.meldingsoppsamler.målinger
 
-import no.nav.helse.spotter.meldingsoppsamler.TagResolver.typedTag
+import no.nav.helse.spotter.meldingsoppsamler.Tags.avventerArbeidgivereTilAvventerHistorikk
+import no.nav.helse.spotter.meldingsoppsamler.Tags.gjelderEnArbeidsgiver
+import no.nav.helse.spotter.meldingsoppsamler.Tags.gjelderFlereArbeidsgivere
 
 internal object OverstyrTidslinje : Måling(
     navn = { "overstyr_tidslinje" },
@@ -18,12 +20,17 @@ internal object GodkjenningEnArbeidsgiver : Måling(
     navn = { "godkjenning_av_en_arbeidsgiver" },
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
-    erAktuell = { måling -> måling.any { it.tags.typedTag("enArbeidsgiver") }
-})
+    erAktuell = { måling ->
+        måling.any { it.tags.gjelderEnArbeidsgiver() }
+    }
+)
 
 internal object GodkjenningFlereArbeidsgivere : Måling(
     navn = { "godkjenning_av_flere_arbeidsgivere" },
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
-    erAktuell = { måling -> måling.any { it.tags.typedTag("flereArbeidsgivere") }
-})
+    erAktuell = { måling ->
+        måling.any { it.tags.gjelderFlereArbeidsgivere() } &&
+        måling.any { it.tags.avventerArbeidgivereTilAvventerHistorikk() }
+    }
+)

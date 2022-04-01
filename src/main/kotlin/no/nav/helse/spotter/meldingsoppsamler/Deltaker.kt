@@ -12,7 +12,7 @@ internal class Deltaker(
     override fun hashCode() = tidspunkt.hashCode() + navn.hashCode()
 
     companion object {
-        internal fun JsonNode.resolveDeltaker() : Deltaker {
+        internal fun JsonNode.deltaker() : Deltaker {
             val deltakere = get("system_participating_services") ?: return Deltaker(tidspunkt = opprettet, navn = "Ukjent")
             return deltakere.map { Deltaker(tidspunkt = LocalDateTime.parse(it["time"].asText()), navn = it.get("service").asText()) }.maxByOrNull { it.tidspunkt }!!
         }

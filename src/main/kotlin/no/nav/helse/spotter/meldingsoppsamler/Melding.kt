@@ -3,9 +3,9 @@ package no.nav.helse.spotter.meldingsoppsamler
 import com.fasterxml.jackson.databind.JsonNode
 import no.nav.helse.spotter.eventName
 import no.nav.helse.spotter.id
-import no.nav.helse.spotter.meldingsoppsamler.Deltaker.Companion.resolveDeltaker
-import no.nav.helse.spotter.meldingsoppsamler.TagResolver.resolveTags
-import no.nav.helse.spotter.meldingsoppsamler.UuidLookup.resolveUuids
+import no.nav.helse.spotter.meldingsoppsamler.Deltaker.Companion.deltaker
+import no.nav.helse.spotter.meldingsoppsamler.Tags.tags
+import no.nav.helse.spotter.meldingsoppsamler.UuidLookup.uuids
 import no.nav.helse.spotter.meldingsoppsamler.Visningsnavn.visningsnavn
 import java.time.Duration
 import java.time.LocalDateTime
@@ -14,9 +14,9 @@ internal class Melding(json: JsonNode) {
     internal val id = json.id
     internal val navn = json.eventName
     private val visningsnavn = json.visningsnavn()
-    internal val deltaker = json.resolveDeltaker()
-    internal val tags = json.resolveTags()
-    internal val ider = json.resolveUuids().plus(id).toSet()
+    internal val deltaker = json.deltaker()
+    internal val tags = json.tags()
+    internal val ider = json.uuids()
 
     override fun equals(other: Any?) = other is Melding && other.id == id
     override fun hashCode() = id.hashCode()
