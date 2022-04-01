@@ -21,7 +21,7 @@ internal object GodkjenningEnArbeidsgiver : Måling(
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
     erAktuell = { måling ->
-        måling.any { it.tags.gjelderEnArbeidsgiver() }
+        måling.any { it.navn == "behov" && it.tags.gjelderEnArbeidsgiver() }
     }
 )
 
@@ -30,7 +30,7 @@ internal object GodkjenningFlereArbeidsgivere : Måling(
     fra = { it.navn == "saksbehandler_løsning" },
     til = { it.navn == "oppgave_opprettet" },
     erAktuell = { måling ->
-        måling.any { it.tags.gjelderFlereArbeidsgivere() } &&
-        måling.any { it.tags.avventerArbeidgivereTilAvventerHistorikk() }
+        måling.any { it.navn == "behov" && it.tags.gjelderFlereArbeidsgivere() } &&
+        måling.any { it.navn == "vedtaksperiode_endret" && it.tags.avventerArbeidgivereTilAvventerHistorikk() }
     }
 )

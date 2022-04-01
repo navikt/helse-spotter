@@ -24,9 +24,7 @@ internal class TagsTest {
         """
 
         val forventet = mapOf(
-            "behov.Godkjenning.innektskilde" to "EN_ARBEIDSGIVER",
-            "vedtaksperiode_endret.forrigeTilstand" to "__UNDEFINED__",
-            "vedtaksperiode_endret.gjeldendeTilstand" to "__UNDEFINED__"
+            "behov.Godkjenning.innektskilde" to "EN_ARBEIDSGIVER"
         )
 
         assertEquals(forventet, json.tags())
@@ -48,14 +46,29 @@ internal class TagsTest {
         """
 
         val forventet = mapOf(
-            "behov.Godkjenning.innektskilde" to "FLERE_ARBEIDSGIVERE",
-            "vedtaksperiode_endret.forrigeTilstand" to "__UNDEFINED__",
-            "vedtaksperiode_endret.gjeldendeTilstand" to "__UNDEFINED__"
+            "behov.Godkjenning.innektskilde" to "FLERE_ARBEIDSGIVERE"
         )
 
         assertEquals(forventet, json.tags())
         assertFalse(forventet.gjelderEnArbeidsgiver())
         assertTrue(forventet.gjelderFlereArbeidsgivere())
+        assertFalse(forventet.avventerArbeidgivereTilAvventerHistorikk())
+    }
+
+    @Test
+    fun `annet type behov`() {
+        @Language("JSON")
+        val json = """
+           {
+              "@event_name": "behov",
+              "Foreldrepenger": {}
+           } 
+        """
+
+        val forventet = mapOf<String, Any>()
+        assertEquals(forventet, json.tags())
+        assertFalse(forventet.gjelderEnArbeidsgiver())
+        assertFalse(forventet.gjelderFlereArbeidsgivere())
         assertFalse(forventet.avventerArbeidgivereTilAvventerHistorikk())
     }
 
@@ -71,7 +84,6 @@ internal class TagsTest {
         """
 
         val forventet = mapOf(
-            "behov.Godkjenning.innektskilde" to "__UNDEFINED__",
             "vedtaksperiode_endret.forrigeTilstand" to "AVVENTER_ARBEIDSGIVERE",
             "vedtaksperiode_endret.gjeldendeTilstand" to "AVVENTER_HISTORIKK"
         )
@@ -94,7 +106,6 @@ internal class TagsTest {
         """
 
         val forventet = mapOf(
-            "behov.Godkjenning.innektskilde" to "__UNDEFINED__",
             "vedtaksperiode_endret.forrigeTilstand" to "AVVENTER_ARBEIDSGIVERE",
             "vedtaksperiode_endret.gjeldendeTilstand" to "TIL_INFOTRYGD"
         )
@@ -107,11 +118,7 @@ internal class TagsTest {
 
     @Test
     fun `ingen tags i meldingen`() {
-        val forventet = mapOf(
-            "behov.Godkjenning.innektskilde" to "__UNDEFINED__",
-            "vedtaksperiode_endret.forrigeTilstand" to "__UNDEFINED__",
-            "vedtaksperiode_endret.gjeldendeTilstand" to "__UNDEFINED__"
-        )
+        val forventet = mapOf<String, Any>()
         assertEquals(forventet, "{}".tags())
         assertEquals(false, forventet.gjelderEnArbeidsgiver())
         assertEquals(false, forventet.gjelderFlereArbeidsgivere())
