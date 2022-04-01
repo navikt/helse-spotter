@@ -4,18 +4,26 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 internal class Meldingsgruppe(melding: Melding) {
-    private val meldinger = mutableListOf(melding)
-    private val ider = mutableSetOf<UUID>().also { it.addAll(melding.ider) }
+    private var sistOppdatert: LocalDateTime = melding.deltaker.tidspunkt
+    private val meldinger = mutableListOf<Melding>()
+    private val ider = mutableSetOf<UUID>()
+
+    private fun add(melding: Melding) {
+        ider.addAll(melding.ider)
+        meldinger.add(melding)
+        if (melding.deltaker.tidspunkt > sistOppdatert) {
+            sistOppdatert = melding.deltaker.tidspunkt
+        }
+    }
+
+    init { add(melding) }
 
     internal fun leggTil(melding: Melding): Meldingsgruppe? {
         if (ider.intersect(melding.ider).isEmpty()) return null
-        meldinger.add(melding)
-        ider.addAll(melding.ider)
+        add(melding)
         return this
     }
 
     internal fun meldinger() = meldinger.sortedBy { it.deltaker.tidspunkt }
-    internal fun oppdatertEtter(tidspunkt: LocalDateTime) = meldinger.any { it.oppdatertEtter(tidspunkt) }
-
-    private fun Melding.oppdatertEtter(tidspunkt: LocalDateTime) = this.deltaker.tidspunkt > tidspunkt
+    internal fun oppdatertEtter(tidspunkt: LocalDateTime) = sistOppdatert > tidspunkt
 }

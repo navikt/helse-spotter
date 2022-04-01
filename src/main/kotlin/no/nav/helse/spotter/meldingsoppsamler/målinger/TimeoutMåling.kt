@@ -6,7 +6,7 @@ import no.nav.helse.spotter.meldingsoppsamler.målinger.Måling.Companion.målin
 
 internal object TimeoutMåling : MeldingsgruppeListener {
     override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>): Boolean {
-        if (meldinger.size < 2 || meldinger.first().navn == meldinger.last().navn || meldinger.last().navn == "behov") return false
+        if (meldinger.isEmpty()) return false // Dette burde jo ikke skje, men guard for bruk av first() & last() under
         val navn = "${meldinger.first().navn}_til_${meldinger.last().navn}"
         meldinger.målingFerdig(navn)
         return true
