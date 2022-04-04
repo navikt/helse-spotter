@@ -49,7 +49,8 @@ internal class MeldingsoppsamlerRiver {
             "planlagt_påminnelse",
             "påminnelse",
             "utbetalingpåminnelse",
-            "person_påminnelse"
+            "person_påminnelse",
+            "infotrygdendring_uten_aktør"
         )
 
         private fun ignorerteEvents() =

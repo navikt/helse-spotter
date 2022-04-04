@@ -6,6 +6,7 @@ import no.nav.helse.spotter.meldingsoppsamler.Melding
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formater
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.formaterDuration
 import no.nav.helse.spotter.meldingsoppsamler.Melding.Companion.totaltid
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 internal abstract class Måling(
@@ -22,7 +23,7 @@ internal abstract class Måling(
         if (fraIndex > tilIndex) return false
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return false
-        måling.målingFerdig(navn(måling))
+        måling.målingFerdig(navn(måling), logger)
         return true
     }
 
@@ -40,10 +41,10 @@ internal abstract class Måling(
             .labelNames("measurement")
             .register()
 
-        internal fun List<Melding>.målingFerdig(navn: String) {
+        internal fun List<Melding>.målingFerdig(navn: String, log: Logger) {
             val totaltid = totaltid()
             rapidMeasurement.labels(navn).observe(totaltid.toSeconds().toDouble())
-            logger.info("Måling $navn tok ${totaltid.formaterDuration()} ${formater()}")
+            log.info("Måling $navn tok ${totaltid.formaterDuration()} ${formater()}")
         }
     }
 }
