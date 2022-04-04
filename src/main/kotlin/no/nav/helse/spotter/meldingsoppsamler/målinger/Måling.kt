@@ -19,8 +19,7 @@ internal abstract class Måling(
     override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>): Boolean{
         if (!til(nyMelding)) return false
         val fraIndex = meldinger.indexOfLastOrNull(fra) ?: return false
-        val tilIndex = meldinger.indexOfLastOrNull(til) ?: return false
-        if (fraIndex > tilIndex) return false
+        val tilIndex = meldinger.filterIndexed { index, _ -> index >= fraIndex }.indexOfFirstOrNull(til) ?: return false
         val måling = meldinger.subList(fraIndex, tilIndex + 1)
         if (!erAktuell(måling)) return false
         måling.målingFerdig(navn(måling), logger)
@@ -30,11 +29,11 @@ internal abstract class Måling(
     internal companion object {
         private val logger = LoggerFactory.getLogger(Måling::class.java)
 
-        private fun List<Melding>.indexOfLastOrNull(predicate: (melding: Melding) -> Boolean): Int? {
-            val index = indexOfLast(predicate)
-            if (index < 0) return null
-            return index
-        }
+        private fun List<Melding>.indexOfLastOrNull(predicate: (melding: Melding) -> Boolean) =
+            indexOfLast(predicate).takeUnless { it < 0 }
+
+        private fun List<Melding>.indexOfFirstOrNull(predicate: (melding: Melding) -> Boolean) =
+            indexOfFirst(predicate).takeUnless { it < 0 }
 
         private val rapidMeasurement = Histogram
             .build("rapid_measurement", "Måler tiden ting tar på rapiden")
