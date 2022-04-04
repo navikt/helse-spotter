@@ -8,6 +8,7 @@ import no.nav.rapids_and_rivers.cli.JsonRiver
 import no.nav.rapids_and_rivers.cli.RapidsCliApplication
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
+import java.time.LocalTime
 
 internal class MeldingsoppsamlerRiver {
     private val konkreteMålinger = listOf(
@@ -27,6 +28,7 @@ internal class MeldingsoppsamlerRiver {
             JsonRiver(this).apply {
                 validate(harStandardfelter())
                 validate(ignorerteEvents())
+                validate(spottetid())
                 onMessage { _, node -> node.leggTil() }
             }
         }
@@ -40,6 +42,7 @@ internal class MeldingsoppsamlerRiver {
 
     private companion object {
         private val logger = LoggerFactory.getLogger(Meldingsoppsamler::class.java)
+        private val spottetid = LocalTime.parse("05:00:00")..LocalTime.parse("23:59:59")
 
         private val ignorerteEvents = listOf(
             "ping",
@@ -54,9 +57,15 @@ internal class MeldingsoppsamlerRiver {
         )
 
         private fun ignorerteEvents() =
-            fun (_: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
+            fun(_: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
                 if (node.eventName in ignorerteEvents) return reasons.failed("Ignorer melding med @event_name=${node.eventName}")
                 return true
+            }
+
+        private fun spottetid() =
+            fun(_: ConsumerRecord<String, String>, node: JsonNode, reasons: MutableList<String>): Boolean {
+                if (node.opprettet.toLocalTime() in spottetid) return true
+                return reasons.failed("Utenfor spottetid")
             }
     }
 }
