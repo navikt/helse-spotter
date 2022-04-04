@@ -8,7 +8,7 @@ repositories {
 }
 
 val junitJupiterVersion = "5.8.2"
-val rapidsAndRiversCliVersion = "1.94f5da1"
+val rapidsAndRiversCliVersion = "1.520584e"
 
 dependencies {
     implementation(kotlin("stdlib"))
