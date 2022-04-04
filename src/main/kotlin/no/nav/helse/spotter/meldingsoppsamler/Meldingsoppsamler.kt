@@ -23,29 +23,29 @@ internal class Meldingsoppsamler(
         val eksisterendeKobledeMeldinger = meldingsgrupper.mapNotNull { it.leggTil(melding) }.onEach { eksisterende ->
             meldingsgruppeListeners.onNyMelding(melding, eksisterende.meldinger())
         }
-        if (eksisterendeKobledeMeldinger.isNotEmpty()) return finalize(melding)
+        if (eksisterendeKobledeMeldinger.isNotEmpty()) return rydd(melding)
 
         val ny = Meldingsgruppe(melding).also { meldingsgrupper.add(it) }
         meldingsgruppeListeners.onNyMelding(melding, ny.meldinger())
 
-        finalize(melding)
+        rydd(melding)
     }
 
     internal fun antallMeldingsgrupper() = meldingsgrupper.size
 
-    private fun finalize(melding: Melding) {
+    private fun rydd(melding: Melding) {
         val tidspunkt = melding.deltaker.tidspunkt
         if (!skalRydde(tidspunkt, ryddetSist)) return
 
         ryddetSist = tidspunkt
         val timeout = tidspunkt.minusMinutes(10)
 
-        val antallMeldingsdgrupperFørSletting = meldingsgrupper.size
-        meldingsgrupper.removeIf { (!it.oppdatertEtter(timeout)).also { slettes -> if (slettes) {
+        val antallMeldingsgrupperFørOpprydding = meldingsgrupper.size
+        meldingsgrupper.removeIf { (it.startetFør(timeout)).also { slettes -> if (slettes) {
             meldingsgruppeListeners.onTimeout(it.meldinger())
         }}}
-        (antallMeldingsdgrupperFørSletting - meldingsgrupper.size).takeIf { it > 0 }?.also {
-            logger.info("Slettet $it meldingsgruppe(r) som ikke er oppdatert på 10 minutter.")
+        (antallMeldingsgrupperFørOpprydding - meldingsgrupper.size).takeIf { it > 0 }?.also {
+            logger.info("Slettet $it meldingsgruppe(r) som har eksistert i over 10 minutter.")
         }
     }
 
