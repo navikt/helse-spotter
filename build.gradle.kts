@@ -7,14 +7,8 @@ repositories {
     maven("https://jitpack.io")
 }
 
-val ktorVersion = "1.6.7"
-val flywayVersion = "8.4.1"
-val hikariVersion = "5.0.1"
-val jacksonVersion = "2.12.4"
-val kotliqueryVersion = "1.6.0"
 val junitJupiterVersion = "5.8.2"
-val testcontainersVersion = "1.16.2"
-val rapidsAndRiversCliVersion = "1.be82170"
+val rapidsAndRiversCliVersion = "1.94f5da1"
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -23,22 +17,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
     testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-    testImplementation("io.mockk:mockk:1.12.0")
+    testImplementation("io.mockk:mockk:1.12.3")
 
-
-    implementation("io.prometheus:simpleclient_common:0.14.0")
-    implementation("io.prometheus:simpleclient_hotspot:0.14.0")
-
-    /*
-    implementation("io.ktor:ktor-jackson:$ktorVersion")
-    implementation("org.postgresql:postgresql:42.3.1")
-    implementation("com.zaxxer:HikariCP:$hikariVersion")
-    implementation("com.github.seratch:kotliquery:$kotliqueryVersion")
-    implementation("org.flywaydb:flyway-core:$flywayVersion")
-
-    testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
-    testImplementation("org.testcontainers:testcontainers:$testcontainersVersion")
-    testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")*/
+    implementation("io.prometheus:simpleclient_common:0.15.0")
+    implementation("io.prometheus:simpleclient_hotspot:0.15.0")
 }
 
 
@@ -51,7 +33,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "7.3.3"
+        gradleVersion = "7.4.2"
     }
     withType<Test> {
         useJUnitPlatform()
