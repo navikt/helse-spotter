@@ -19,8 +19,9 @@ internal abstract class Måling(
     override fun onNyMelding(nyMelding: Melding, meldinger: List<Melding>): Boolean{
         if (!til(nyMelding)) return false
         val fraIndex = meldinger.indexOfLastOrNull(fra) ?: return false
-        val tilIndex = meldinger.filterIndexed { index, _ -> index >= fraIndex }.indexOfFirstOrNull(til) ?: return false
-        val måling = meldinger.subList(fraIndex, tilIndex + 1)
+        val tilIndex = meldinger.filterIndexed { index, _ -> index >= fraIndex }.indexOfFirstOrNull(til)?.plus(1) ?: return false
+        if (fraIndex > tilIndex) return false
+        val måling = meldinger.subList(fraIndex, tilIndex)
         if (!erAktuell(måling)) return false
         måling.målingFerdig(navn(måling), logger)
         return true
