@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("jvm") version "1.6.21"
 }
 
 repositories {
@@ -9,6 +9,8 @@ repositories {
 
 val junitJupiterVersion = "5.8.2"
 val rapidsAndRiversCliVersion = "1.520584e"
+val prometheusSimpleclientVersion = "0.15.0"
+val jvmTargetVersion = "17"
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -19,17 +21,17 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
     testImplementation("io.mockk:mockk:1.12.3")
 
-    implementation("io.prometheus:simpleclient_common:0.15.0")
-    implementation("io.prometheus:simpleclient_hotspot:0.15.0")
+    implementation("io.prometheus:simpleclient_common:$prometheusSimpleclientVersion")
+    implementation("io.prometheus:simpleclient_hotspot:$prometheusSimpleclientVersion")
 }
 
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = jvmTargetVersion
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = jvmTargetVersion
     }
 
     withType<Wrapper> {
