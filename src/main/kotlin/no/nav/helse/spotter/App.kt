@@ -1,6 +1,5 @@
 package no.nav.helse.spotter
 
-import no.nav.helse.spotter.meldingsoppsamler.MeldingsoppsamlerRiver
 import no.nav.rapids_and_rivers.cli.AivenConfig
 import no.nav.rapids_and_rivers.cli.ConsumerProducerFactory
 import no.nav.rapids_and_rivers.cli.RapidsCliApplication
@@ -11,7 +10,7 @@ fun main() {
     Api().start()
 
     RapidsCliApplication(ConsumerProducerFactory(AivenConfig.default)).apply {
-        MeldingsoppsamlerRiver().registrer(this)
+        //MeldingsoppsamlerRiver().registrer(this)
         MvpOverstyring("overstyr_inntekt").registrer(this)
         MvpOverstyring("overstyr_tidslinje").registrer(this)
         MvpGodkjenning().registrer(this)
