@@ -1,41 +1,51 @@
 plugins {
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.9.22"
 }
 
 repositories {
+    val githubPassword: String? by project
     mavenCentral()
-    maven("https://jitpack.io")
+    /* ihht. https://github.com/navikt/utvikling/blob/main/docs/teknisk/Konsumere%20biblioteker%20fra%20Github%20Package%20Registry.md
+        så plasseres github-maven-repo (med autentisering) før nav-mirror slik at github actions kan anvende førstnevnte.
+        Det er fordi nav-mirroret kjører i Google Cloud og da ville man ellers fått unødvendige utgifter til datatrafikk mellom Google Cloud og GitHub
+     */
+    maven {
+        url = uri("https://maven.pkg.github.com/navikt/maven-release")
+        credentials {
+            username = "x-access-token"
+            password = githubPassword
+        }
+    }
+    maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
 }
 
-val junitJupiterVersion = "5.8.2"
+val junitJupiterVersion = "5.10.1"
 val rapidsAndRiversCliVersion = "1.520584e"
 val prometheusSimpleclientVersion = "0.15.0"
-val jvmTargetVersion = "17"
+val jvmTargetVersion = "21"
 
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.github.navikt:rapids-and-rivers-cli:$rapidsAndRiversCliVersion")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitJupiterVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-    testImplementation("io.mockk:mockk:1.12.3")
+    testImplementation("io.mockk:mockk:1.13.9")
 
     implementation("io.prometheus:simpleclient_common:$prometheusSimpleclientVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusSimpleclientVersion")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(jvmTargetVersion)
+    }
+}
 
 tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = jvmTargetVersion
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = jvmTargetVersion
-    }
-
     withType<Wrapper> {
-        gradleVersion = "7.4.2"
+        gradleVersion = "8.5"
     }
     withType<Test> {
         useJUnitPlatform()
