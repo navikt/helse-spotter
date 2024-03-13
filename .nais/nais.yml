@@ -29,5 +29,9 @@ spec:
     path: /metrics
   secureLogs:
     enabled: true
+  observability:
+    autoInstrumentation:
+      enabled: true
+      runtime: java
   kafka:
     pool: {{kafkaPool}}
