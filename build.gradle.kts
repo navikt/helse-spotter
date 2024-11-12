@@ -22,7 +22,6 @@ repositories {
 val junitJupiterVersion = "5.10.2"
 val rapidsAndRiversCliVersion = "1.bb1645e"
 val prometheusSimpleclientVersion = "0.16.0"
-val jvmTargetVersion = "21"
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -37,9 +36,9 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(jvmTargetVersion)
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of("21"))
     }
 }
 
