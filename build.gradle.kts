@@ -20,7 +20,7 @@ repositories {
 }
 
 val junitJupiterVersion = "5.11.3"
-val rapidsAndRiversCliVersion = "1.bb1645e"
+val rapidsAndRiversCliVersion = "1.8bf080c"
 val prometheusSimpleclientVersion = "0.16.0"
 
 dependencies {
