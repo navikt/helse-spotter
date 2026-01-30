@@ -27,7 +27,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.github.navikt:rapids-and-rivers-cli:$rapidsAndRiversCliVersion")
 
-    testImplementation("io.mockk:mockk:1.13.9")
+    testImplementation("io.mockk:mockk:1.14.7")
 
     implementation("io.prometheus:simpleclient_common:$prometheusSimpleclientVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusSimpleclientVersion")
