@@ -19,7 +19,7 @@ repositories {
     maven("https://github-package-registry-mirror.gc.nav.no/cached/maven-release")
 }
 
-val junitJupiterVersion = "6.0.2"
+val junitJupiterVersion = "6.0.3"
 val rapidsAndRiversCliVersion = "1.2e828ce"
 val prometheusSimpleclientVersion = "0.16.0"
 
